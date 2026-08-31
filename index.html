@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>낚시 일지</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root {
+    --bg: #E6E7DC;
+    --bg-card: #F5F5EC;
+    --sea: #1F3A4D;
+    --sea-light: #3C6178;
+    --amber: #B8752E;
+    --amber-soft: #F0DFC2;
+    --ink: #26302F;
+    --ink-soft: #6E7A78;
+    --ink-faint: #9BA6A3;
+    --line: #C7CCB9;
+    --line-soft: #DEE1D2;
+    --good: #2E6B5E;
+    --good-soft: #DCEAE5;
+    --warn: #A17A2A;
+    --warn-soft: #F0E4C6;
+    --note: #3E4F73;
+    --note-soft: #DDE1EE;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    background-image: radial-gradient(circle at 1px 1px, rgba(38,48,47,0.05) 1px, transparent 0);
+    background-size: 22px 22px;
+    color: var(--ink);
+    font-family: 'IBM Plex Sans KR', sans-serif;
+    min-height: 100vh;
+    padding: 28px 16px 80px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+
+  header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid var(--sea);
+    flex-wrap: wrap; gap: 10px;
+  }
+  .title-block { display: flex; align-items: center; gap: 11px; }
+  .fish-mark { width: 32px; height: 32px; flex-shrink: 0; }
+  h1 { font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px; margin: 0; color: var(--sea); letter-spacing: -0.01em; }
+  .subtitle { font-size: 11px; color: var(--ink-soft); margin-top: 2px; font-family: 'IBM Plex Mono', monospace; }
+
+  .header-actions { display: flex; gap: 8px; }
+  .ghost-btn {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; padding: 7px 12px;
+    border: 1px solid var(--line); background: var(--bg-card); color: var(--ink-soft);
+    border-radius: 7px; cursor: pointer;
+  }
+  .ghost-btn:hover { border-color: var(--sea); color: var(--sea); }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    background: var(--sea); border-radius: 10px; overflow: hidden;
+    margin-bottom: 24px; box-shadow: 0 6px 16px rgba(31,58,77,0.2);
+  }
+  .stat { padding: 13px 8px; text-align: center; border-right: 1px solid rgba(255,255,255,0.12); }
+  .stat:last-child { border-right: none; }
+  .stat-num { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; color: #F5F5EC; }
+  .stat-label { font-size: 10px; color: rgba(245,245,236,0.65); margin-top: 2px; }
+
+  .write-card {
+    background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 0 var(--line-soft);
+  }
+  .write-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .write-head h2 { font-family: 'Fraunces', serif; font-size: 17px; margin: 0; color: var(--sea); font-weight: 600; }
+  .cancel-edit { display: none; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-faint); background: none; border: none; text-decoration: underline; cursor: pointer; }
+  .cancel-edit.show { display: inline; }
+
+  .form-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .form-row > div { flex: 1; min-width: 130px; }
+  label { display: block; font-size: 10.5px; color: var(--ink-soft); margin-bottom: 4px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 0.03em; }
+  input, textarea, select {
+    width: 100%; border: 1px solid var(--line); background: #fff; border-radius: 7px;
+    padding: 9px 10px; font-family: 'IBM Plex Sans KR', sans-serif; font-size: 13.5px; color: var(--ink);
+  }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--sea-light); outline-offset: 1px; }
+  textarea { resize: vertical; min-height: 56px; font-family: inherit; }
+
+  .weather-row, .species-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .weather-opt { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 16px; background: #fff; cursor: pointer; }
+  .weather-opt.selected { border-color: var(--sea); background: #E1E8EA; }
+  .species-opt { padding: 6px 12px; border: 1px solid var(--line); border-radius: 20px; font-size: 12px; color: var(--ink-soft); background: #fff; cursor: pointer; user-select: none; }
+  .species-opt.selected { border-color: var(--good); background: var(--good-soft); color: var(--good); }
+
+  .rating-row { display: flex; align-items: center; gap: 4px; padding: 4px 0; }
+  .star { font-size: 22px; color: var(--line); cursor: pointer; line-height: 1; }
+  .star.filled { color: var(--amber); }
+  .rating-label { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft); margin-left: 8px; }
+
+  .field-catch label { color: var(--good); }
+  .field-note label { color: var(--note); }
+
+  .submit-btn {
+    width: 100%; margin-top: 8px; padding: 12px; background: var(--sea); color: #F5F5EC;
+    border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: 'IBM Plex Sans KR', sans-serif;
+  }
+  .submit-btn:hover { background: var(--sea-light); }
+  .submit-btn:disabled { opacity: 0.5; cursor: default; }
+
+  .cat-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .cat-tab {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; padding: 7px 13px;
+    border: 1px solid var(--line); border-radius: 20px; background: var(--bg-card);
+    color: var(--ink-soft); cursor: pointer; user-select: none;
+  }
+  .cat-tab.active { background: var(--sea); border-color: var(--sea); color: #F5F5EC; }
+  .cat-tab .count { opacity: 0.7; margin-left: 3px; }
+
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-bar input[type="text"] { flex: 1; min-width: 140px; }
+  .filter-bar select { width: auto; flex-shrink: 0; }
+
+  .entries-head { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 12px 4px; }
+
+  .entry { position: relative; background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+  .entry::before { content: ''; position: absolute; top: -1px; left: 16px; right: 16px; height: 1px; background-image: repeating-linear-gradient(to right, var(--line) 0 6px, transparent 6px 12px); }
+  .entry-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; padding: 15px 18px; cursor: pointer; user-select: none; }
+  .entry-top:hover { background: rgba(31,58,77,0.04); }
+  .entry-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .entry-chevron { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-faint); margin-right: 2px; display: inline-block; transition: transform 0.15s ease; }
+  .entry.open .entry-chevron { transform: rotate(90deg); }
+  .entry-date { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600; color: var(--ink); }
+  .entry-loc { font-size: 11px; color: var(--sea); background: #E1E8EA; padding: 2px 9px; border-radius: 20px; }
+  .entry-theme { font-size: 13px; color: var(--ink-soft); margin-top: 3px; }
+  .entry-side { text-align: right; flex-shrink: 0; }
+  .entry-stars { font-size: 13px; color: var(--amber); letter-spacing: 1px; }
+  .entry-meta2 { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); margin-top: 3px; }
+
+  .entry-details { display: none; padding: 0 18px 16px; }
+  .entry.open .entry-details { display: block; }
+
+  .entry-infobar { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--ink-soft); }
+  .entry-infobar b { color: var(--ink); font-weight: 600; }
+
+  .entry-species { display: flex; flex-wrap: wrap; gap: 5px; margin: 2px 0 8px; }
+  .entry-species span { font-size: 10.5px; color: var(--good); background: var(--good-soft); padding: 2px 8px; border-radius: 20px; }
+
+  .note-block { border-radius: 8px; padding: 9px 12px; font-size: 13px; line-height: 1.6; margin-top: 8px; white-space: pre-wrap; }
+  .note-block .note-tag { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; display: block; margin-bottom: 3px; font-weight: 600; }
+  .note-catch { background: var(--good-soft); color: #1B3A32; }
+  .note-catch .note-tag { color: var(--good); }
+  .note-note { background: var(--note-soft); color: #232F49; }
+  .note-note .note-tag { color: var(--note); }
+
+  .entry-actions { margin-top: 12px; display: flex; gap: 12px; }
+  .entry-actions button { background: none; border: none; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-faint); cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+  .entry-actions button:hover { color: var(--amber); }
+
+  .empty-state { text-align: center; padding: 44px 20px; color: var(--ink-soft); }
+  .empty-state p { font-size: 13.5px; margin: 4px 0; }
+  .loading { text-align: center; padding: 40px; color: var(--ink-soft); font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(38,48,47,0.45); align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+  .modal-overlay.show { display: flex; }
+  .modal-box { background: var(--bg-card); border-radius: 12px; max-width: 480px; width: 100%; padding: 20px; border: 1px solid var(--line); }
+  .modal-box h3 { font-family: 'Fraunces', serif; font-size: 16px; margin: 0 0 4px; color: var(--sea); }
+  .modal-box p { font-size: 12px; color: var(--ink-soft); margin: 0 0 10px; }
+  .modal-box textarea { min-height: 200px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+  .modal-actions button { font-family: 'IBM Plex Sans KR', sans-serif; font-size: 13px; padding: 8px 14px; border-radius: 7px; cursor: pointer; }
+  .modal-actions .close-btn { background: none; border: 1px solid var(--line); color: var(--ink-soft); }
+  .modal-actions .copy-btn { background: var(--sea); border: none; color: #F5F5EC; }
+
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--sea); color: #F5F5EC; padding: 10px 18px; border-radius: 8px;
+    font-size: 13px; opacity: 0; pointer-events: none; transition: all 0.25s ease; z-index: 60;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  #importFile { display: none; }
+
+  /* Map picker + entry map */
+  .pick-coord { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); margin-top: 6px; }
+  #pickMap { height: 200px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .entry-map { margin: 4px 0 8px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+  .entry-map img { display: block; width: 100%; height: auto; }
+  .entry-map-links { font-family: 'IBM Plex Mono', monospace; font-size: 11px; margin-bottom: 8px; }
+  .entry-map-links a { color: var(--sea); text-decoration: underline; text-underline-offset: 2px; }
+  .entry-map-links span { color: var(--ink-faint); margin: 0 4px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="title-block">
+      <svg class="fish-mark" viewBox="0 0 40 40" fill="none">
+        <path d="M6 20c4-8 14-12 22-9-2 3-3 6-3 9s1 6 3 9c-8 3-18-1-22-9z" fill="#1F3A4D"/>
+        <circle cx="12" cy="18" r="1.4" fill="#F5F5EC"/>
+        <path d="M28 12c3 3 3 13 0 16" stroke="#B8752E" stroke-width="2" stroke-linecap="round" fill="none"/>
+      </svg>
+      <div>
+        <h1>낚시 일지</h1>
+        <div class="subtitle">FISHING LOG</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="ghost-btn" id="exportBtn">백업 내보내기</button>
+      <button class="ghost-btn" id="importBtn">불러오기</button>
+      <input type="file" id="importFile" accept=".json">
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-num" id="statTrips">–</div><div class="stat-label">총 출조</div></div>
+    <div class="stat"><div class="stat-num" id="statFish">–</div><div class="stat-label">누적 마리수</div></div>
+    <div class="stat"><div class="stat-num" id="statRating">–</div><div class="stat-label">평균 조황 만족도</div></div>
+    <div class="stat"><div class="stat-num" id="statSpecies" style="font-size:14px;">–</div><div class="stat-label">최다 어종</div></div>
+  </div>
+
+  <div class="write-card">
+    <div class="write-head">
+      <h2 id="formTitle">출조 기록 작성</h2>
+      <button class="cancel-edit" id="cancelEditBtn">취소 (새 일지 쓰기)</button>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>날짜</label>
+        <input type="date" id="f-date">
+      </div>
+      <div>
+        <label>물때</label>
+        <input type="text" id="f-tide" placeholder="예: 7물, 사리">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>장소 (지역)</label>
+        <input type="text" id="f-region" placeholder="예: 여수, 통영, 대청호">
+      </div>
+      <div>
+        <label>상세 위치 / 포인트</label>
+        <input type="text" id="f-spot" placeholder="예: OO방파제, OO자리">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div style="flex: 1 1 100%;">
+        <label>위치 지도에 찍기 (선택)</label>
+        <div id="pickMap"></div>
+        <div class="pick-coord" id="pickCoordLabel">지도를 클릭해서 대충 위치를 찍어보세요</div>
+        <button type="button" class="ghost-btn" id="clearPinBtn" style="margin-top:6px;">위치 지우기</button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>날씨</label>
+        <div class="weather-row" id="weatherRow">
+          <div class="weather-opt" data-w="☀️">☀️</div>
+          <div class="weather-opt" data-w="⛅">⛅</div>
+          <div class="weather-opt" data-w="☁️">☁️</div>
+          <div class="weather-opt" data-w="🌧️">🌧️</div>
+          <div class="weather-opt" data-w="💨">💨</div>
+          <div class="weather-opt" data-w="❄️">❄️</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>미끼 / 채비</label>
+        <input type="text" id="f-bait" placeholder="예: 크릴, 지그헤드, 갯지렁이">
+      </div>
+      <div>
+        <label>총 마리수</label>
+        <input type="number" id="f-count" placeholder="예: 12">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>잡은 어종</label>
+        <div class="species-row" id="speciesRow"></div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>오늘 조황 만족도</label>
+        <div class="rating-row" id="ratingRow">
+          <span class="star" data-v="1">★</span>
+          <span class="star" data-v="2">★</span>
+          <span class="star" data-v="3">★</span>
+          <span class="star" data-v="4">★</span>
+          <span class="star" data-v="5">★</span>
+          <span class="rating-label" id="ratingLabel">3 / 5</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row field-catch">
+      <div>
+        <label>조과 상세</label>
+        <textarea id="f-catchdetail" placeholder="사이즈, 시간대별 입질, 특이사항 등…"></textarea>
+      </div>
+    </div>
+    <div class="form-row field-note">
+      <div>
+        <label>메모 / 참고사항</label>
+        <textarea id="f-note" placeholder="다음에 기억할 점, 포인트 특징, 물때 타이밍 등…"></textarea>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submitBtn">출조 기록 저장하기</button>
+  </div>
+
+  <div class="cat-tabs" id="catTabs"></div>
+
+  <div class="filter-bar">
+    <input type="text" id="searchInput" placeholder="장소, 어종, 메모 검색…">
+    <select id="sortBy">
+      <option value="newest">최신순</option>
+      <option value="oldest">오래된순</option>
+      <option value="highest">만족도 높은순</option>
+    </select>
+  </div>
+
+  <div id="entriesArea">
+    <div class="loading">불러오는 중…</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <h3>텍스트로 복사</h3>
+    <p>카카오톡 '나와의 채팅'이나 노션 등에 바로 붙여넣기 좋은 포맷이에요.</p>
+    <textarea id="modalText" readonly></textarea>
+    <div class="modal-actions">
+      <button class="close-btn" id="modalClose">닫기</button>
+      <button class="copy-btn" id="modalCopy">클립보드로 복사</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SPECIES = ['우럭','광어','감성돔','참돔','농어','전갱이','벵에돔','갈치','오징어','붕어','배스','잉어','기타'];
+const REGIONS = []; // freeform, no fixed category list
+
+let selectedSpecies = [];
+let selectedWeather = null;
+let rating = 3;
+let editingId = null;
+let entries = [];
+let activeCategory = 'ALL';
+let expandedIds = new Set();
+let pickedLat = null, pickedLng = null, pickMap, pickMarker;
+
+const el = id => document.getElementById(id);
+const dateEl = el('f-date'), tideEl = el('f-tide'), regionEl = el('f-region'), spotEl = el('f-spot'),
+      baitEl = el('f-bait'), countEl = el('f-count'), catchDetailEl = el('f-catchdetail'), noteEl = el('f-note'),
+      submitBtn = el('submitBtn'), entriesArea = el('entriesArea'), speciesRow = el('speciesRow'),
+      weatherRow = el('weatherRow'), ratingRow = el('ratingRow'), ratingLabel = el('ratingLabel'),
+      formTitle = el('formTitle'), cancelEditBtn = el('cancelEditBtn');
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+dateEl.value = todayStr();
+
+function renderSpeciesChips() {
+  speciesRow.innerHTML = SPECIES.map(s => `<div class="species-opt ${selectedSpecies.includes(s)?'selected':''}" data-s="${s}">${s}</div>`).join('');
+}
+renderSpeciesChips();
+speciesRow.addEventListener('click', e => {
+  const opt = e.target.closest('.species-opt');
+  if (!opt) return;
+  const s = opt.dataset.s;
+  selectedSpecies = selectedSpecies.includes(s) ? selectedSpecies.filter(x=>x!==s) : [...selectedSpecies, s];
+  renderSpeciesChips();
+});
+
+weatherRow.addEventListener('click', e => {
+  const opt = e.target.closest('.weather-opt');
+  if (!opt) return;
+  const w = opt.dataset.w;
+  selectedWeather = (selectedWeather === w) ? null : w;
+  [...weatherRow.children].forEach(c => c.classList.toggle('selected', c.dataset.w === selectedWeather));
+});
+
+function renderStars() {
+  [...ratingRow.querySelectorAll('.star')].forEach(s => s.classList.toggle('filled', Number(s.dataset.v) <= rating));
+  ratingLabel.textContent = rating + ' / 5';
+}
+renderStars();
+ratingRow.addEventListener('click', e => {
+  const s = e.target.closest('.star');
+  if (!s) return;
+  rating = Number(s.dataset.v);
+  renderStars();
+});
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+function fmtDate(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' });
+}
+function staticMapUrl(lat, lng) {
+  return `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=15&size=560x220&maptype=mapnik&markers=${lat},${lng},lightblue1`;
+}
+
+/* ---- Location picker map (no API key needed, OpenStreetMap) ---- */
+function initPickMap() {
+  if (typeof L === 'undefined' || !document.getElementById('pickMap')) return;
+  pickMap = L.map('pickMap').setView([36.5, 127.8], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(pickMap);
+  pickMap.on('click', ev => setPickedLocation(ev.latlng.lat, ev.latlng.lng));
+  setTimeout(() => pickMap.invalidateSize(), 200);
+}
+function setPickedLocation(lat, lng) {
+  pickedLat = lat; pickedLng = lng;
+  if (pickMarker) { pickMarker.setLatLng([lat, lng]); }
+  else { pickMarker = L.marker([lat, lng]).addTo(pickMap); }
+  el('pickCoordLabel').textContent = `선택됨: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+}
+function clearPickedLocation() {
+  pickedLat = null; pickedLng = null;
+  if (pickMarker) { pickMap.removeLayer(pickMarker); pickMarker = null; }
+  el('pickCoordLabel').textContent = '지도를 클릭해서 대충 위치를 찍어보세요';
+}
+el('clearPinBtn').addEventListener('click', clearPickedLocation);
+
+function renderStats() {
+  const n = entries.length;
+  el('statTrips').textContent = n ? n + '회' : '–';
+  const totalFish = entries.reduce((s,e)=>s+(Number(e.count)||0),0);
+  el('statFish').textContent = n ? totalFish.toLocaleString() : '–';
+  const avgRating = n ? (entries.reduce((s,e)=>s+(Number(e.rating)||0),0)/n).toFixed(1) : '–';
+  el('statRating').textContent = avgRating;
+  const counts = {};
+  entries.forEach(e => (e.species||[]).forEach(s => counts[s]=(counts[s]||0)+1));
+  let top = '–', max = 0;
+  Object.entries(counts).forEach(([s,ct]) => { if (ct>max) { max=ct; top=s; } });
+  el('statSpecies').textContent = top !== '–' ? `${top} (${max})` : '–';
+}
+
+function renderCatTabs() {
+  const regionCounts = {};
+  entries.forEach(e => { if (e.region) regionCounts[e.region] = (regionCounts[e.region]||0)+1; });
+  const topRegions = Object.entries(regionCounts).sort((a,b)=>b[1]-a[1]).slice(0,6).map(x=>x[0]);
+  const tabs = ['ALL', ...topRegions];
+  el('catTabs').innerHTML = tabs.map(t => {
+    const label = t === 'ALL' ? '전체' : t;
+    const count = t === 'ALL' ? entries.length : regionCounts[t];
+    return `<div class="cat-tab ${activeCategory===t?'active':''}" data-cat="${t}">${escapeHtml(label)}<span class="count">${count}</span></div>`;
+  }).join('');
+}
+
+function getFiltered() {
+  const q = el('searchInput').value.trim().toLowerCase();
+  const sort = el('sortBy').value;
+  let list = entries.filter(e => {
+    const matchQ = !q || [e.region,e.spot,e.bait,e.catchDetail,e.note,...(e.species||[])].some(v => v && v.toLowerCase().includes(q));
+    const matchCat = activeCategory === 'ALL' || e.region === activeCategory;
+    return matchQ && matchCat;
+  });
+  list.sort((a,b) => {
+    if (sort === 'oldest') return a.date.localeCompare(b.date) || (a.createdAt||0)-(b.createdAt||0);
+    if (sort === 'highest') return (b.rating||0)-(a.rating||0) || b.date.localeCompare(a.date);
+    return b.date.localeCompare(a.date) || (b.createdAt||0)-(a.createdAt||0);
+  });
+  return list;
+}
+
+function renderEntries() {
+  renderStats();
+  renderCatTabs();
+  const list = getFiltered();
+  if (entries.length === 0) {
+    entriesArea.innerHTML = `<div class="empty-state"><p>아직 기록된 출조가 없어요.</p><p>오늘 낚시 다녀온 기록을 위에서 남겨보세요.</p></div>`;
+    return;
+  }
+  if (list.length === 0) {
+    entriesArea.innerHTML = `<div class="empty-state"><p>검색/필터 조건에 맞는 기록이 없어요.</p></div>`;
+    return;
+  }
+  entriesArea.innerHTML = '<div class="entries-head">기록 (' + list.length + ')</div>' +
+    list.map(e => {
+      const stars = '★'.repeat(e.rating||0) + '☆'.repeat(5-(e.rating||0));
+      const isOpen = expandedIds.has(e.id);
+      const title = e.spot ? escapeHtml(e.spot) : (e.region ? escapeHtml(e.region) : '(위치 미기재)');
+      const speciesHtml = (e.species&&e.species.length) ? `<div class="entry-species">${e.species.map(s=>`<span>${escapeHtml(s)}</span>`).join('')}</div>` : '';
+      return `
+      <div class="entry ${isOpen?'open':''}" data-id="${e.id}">
+        <div class="entry-top" data-action="toggle" data-id="${e.id}">
+          <div>
+            <div class="entry-title-row">
+              <span class="entry-chevron">▸</span>
+              <span class="entry-date">${fmtDate(e.date)}</span>
+              ${e.region ? `<span class="entry-loc">${escapeHtml(e.region)}</span>` : ''}
+              ${e.weather ? `<span>${e.weather}</span>` : ''}
+            </div>
+            <div class="entry-theme">${title}</div>
+          </div>
+          <div class="entry-side">
+            <div class="entry-stars">${stars}</div>
+            <div class="entry-meta2">${e.count ? e.count+'마리' : ''}</div>
+          </div>
+        </div>
+        <div class="entry-details">
+          <div class="entry-infobar">
+            ${e.tide ? `<span>물때 <b>${escapeHtml(e.tide)}</b></span>` : ''}
+            ${e.bait ? `<span>미끼/채비 <b>${escapeHtml(e.bait)}</b></span>` : ''}
+          </div>
+          ${speciesHtml}
+          ${(e.lat && e.lng) ? `
+          <div class="entry-map"><img src="${staticMapUrl(e.lat,e.lng)}" alt="위치 지도" loading="lazy"></div>
+          <div class="entry-map-links">
+            <a href="https://map.naver.com/v5/search/${e.lat},${e.lng}" target="_blank" rel="noopener">네이버 지도에서 보기</a>
+            <span>·</span>
+            <a href="https://www.google.com/maps?q=${e.lat},${e.lng}" target="_blank" rel="noopener">구글 지도에서 보기</a>
+          </div>` : ''}
+          ${e.catchDetail ? `<div class="note-block note-catch"><span class="note-tag">조과 상세</span>${escapeHtml(e.catchDetail)}</div>` : ''}
+          ${e.note ? `<div class="note-block note-note"><span class="note-tag">메모 / 참고사항</span>${escapeHtml(e.note)}</div>` : ''}
+          <div class="entry-actions">
+            <button data-action="share" data-id="${e.id}">텍스트 복사</button>
+            <button data-action="edit" data-id="${e.id}">수정</button>
+            <button data-action="delete" data-id="${e.id}">삭제</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+async function loadEntries() {
+  try {
+    const result = await window.storage.list('fishing-entry:', false);
+    if (!result || !result.keys || result.keys.length === 0) {
+      entries = [];
+      renderEntries();
+      return;
+    }
+    const loaded = [];
+    for (const key of result.keys) {
+      try {
+        const r = await window.storage.get(key, false);
+        if (r && r.value) loaded.push(JSON.parse(r.value));
+      } catch (err) {}
+    }
+    entries = loaded;
+    renderEntries();
+  } catch (err) {
+    console.error(err);
+    entriesArea.innerHTML = '<div class="loading">불러오지 못했어요. 새로고침 해보세요.</div>';
+  }
+}
+
+async function saveEntry() {
+  const date = dateEl.value || todayStr();
+  const tide = tideEl.value.trim();
+  const region = regionEl.value.trim();
+  const spot = spotEl.value.trim();
+  const bait = baitEl.value.trim();
+  const count = countEl.value ? Number(countEl.value) : 0;
+  const catchDetail = catchDetailEl.value.trim();
+  const note = noteEl.value.trim();
+
+  if (!region && !spot && !catchDetail && !note) {
+    showToast('장소나 조과 내용을 최소 하나는 입력해주세요.');
+    return;
+  }
+
+  const id = editingId || ('f' + Date.now() + Math.random().toString(36).slice(2,7));
+  const entry = {
+    id, date, tide, region, spot, weather: selectedWeather, bait, count,
+    species: [...selectedSpecies], rating, catchDetail, note,
+    lat: pickedLat, lng: pickedLng,
+    createdAt: editingId ? (entries.find(e=>e.id===editingId)?.createdAt || Date.now()) : Date.now()
+  };
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = '저장 중…';
+  try {
+    const res = await window.storage.set('fishing-entry:' + id, JSON.stringify(entry), false);
+    if (!res) throw new Error('save failed');
+    if (editingId) {
+      entries = entries.map(e => e.id === editingId ? entry : e);
+      showToast('출조 기록이 수정되었습니다.');
+    } else {
+      entries.push(entry);
+      showToast('출조 기록이 저장되었습니다.');
+    }
+    resetForm();
+    renderEntries();
+  } catch (err) {
+    console.error(err);
+    showToast('저장에 실패했어요. 다시 시도해주세요.');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = editingId ? '수정 완료하기' : '출조 기록 저장하기';
+  }
+}
+
+function resetForm() {
+  editingId = null;
+  dateEl.value = todayStr();
+  tideEl.value = '';
+  regionEl.value = '';
+  spotEl.value = '';
+  baitEl.value = '';
+  countEl.value = '';
+  catchDetailEl.value = '';
+  noteEl.value = '';
+  selectedSpecies = [];
+  selectedWeather = null;
+  rating = 3;
+  renderSpeciesChips();
+  [...weatherRow.children].forEach(c => c.classList.remove('selected'));
+  renderStars();
+  clearPickedLocation();
+  if (pickMap) pickMap.setView([36.5, 127.8], 7);
+  formTitle.textContent = '출조 기록 작성';
+  submitBtn.textContent = '출조 기록 저장하기';
+  cancelEditBtn.classList.remove('show');
+}
+
+function editEntry(id) {
+  const e = entries.find(x => x.id === id);
+  if (!e) return;
+  editingId = id;
+  dateEl.value = e.date;
+  tideEl.value = e.tide || '';
+  regionEl.value = e.region || '';
+  spotEl.value = e.spot || '';
+  baitEl.value = e.bait || '';
+  countEl.value = e.count || '';
+  catchDetailEl.value = e.catchDetail || '';
+  noteEl.value = e.note || '';
+  selectedSpecies = e.species ? [...e.species] : [];
+  selectedWeather = e.weather || null;
+  rating = e.rating || 3;
+  renderSpeciesChips();
+  [...weatherRow.children].forEach(c => c.classList.toggle('selected', c.dataset.w === selectedWeather));
+  renderStars();
+  if (e.lat && e.lng) {
+    setPickedLocation(e.lat, e.lng);
+    if (pickMap) pickMap.setView([e.lat, e.lng], 13);
+  } else {
+    clearPickedLocation();
+  }
+  formTitle.textContent = '출조 기록 수정';
+  submitBtn.textContent = '수정 완료하기';
+  cancelEditBtn.classList.add('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function deleteEntry(id) {
+  if (!confirm('이 출조 기록을 삭제할까요?')) return;
+  try {
+    await window.storage.delete('fishing-entry:' + id, false);
+    entries = entries.filter(e => e.id !== id);
+    expandedIds.delete(id);
+    renderEntries();
+    showToast('삭제되었습니다.');
+  } catch (err) {
+    console.error(err);
+    showToast('삭제에 실패했어요.');
+  }
+}
+
+function shareEntry(id) {
+  const e = entries.find(x => x.id === id);
+  if (!e) return;
+  let text = `🎣 [낚시 일지] ${e.date}\n`;
+  if (e.region || e.spot) text += `장소: ${[e.region,e.spot].filter(Boolean).join(' / ')}\n`;
+  if (e.tide) text += `물때: ${e.tide}\n`;
+  if (e.weather) text += `날씨: ${e.weather}\n`;
+  if (e.bait) text += `미끼/채비: ${e.bait}\n`;
+  text += `마리수: ${e.count||0}\n`;
+  if (e.species && e.species.length) text += `어종: ${e.species.join(', ')}\n`;
+  text += `만족도: ${'★'.repeat(e.rating||0)}${'☆'.repeat(5-(e.rating||0))} (${e.rating||0}/5)\n\n`;
+  if (e.catchDetail) text += `[조과 상세]\n${e.catchDetail}\n\n`;
+  if (e.note) text += `[메모]\n${e.note}\n`;
+  el('modalText').value = text;
+  el('modalOverlay').classList.add('show');
+}
+
+entriesArea.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-action]');
+  if (btn) {
+    const id = btn.dataset.id;
+    if (btn.dataset.action === 'delete') deleteEntry(id);
+    if (btn.dataset.action === 'edit') editEntry(id);
+    if (btn.dataset.action === 'share') shareEntry(id);
+    return;
+  }
+  const toggle = e.target.closest('[data-action="toggle"]');
+  if (toggle) {
+    const id = toggle.dataset.id;
+    if (expandedIds.has(id)) expandedIds.delete(id); else expandedIds.add(id);
+    renderEntries();
+  }
+});
+
+el('catTabs').addEventListener('click', e => {
+  const tab = e.target.closest('.cat-tab');
+  if (!tab) return;
+  activeCategory = tab.dataset.cat;
+  renderEntries();
+});
+
+el('modalClose').addEventListener('click', () => el('modalOverlay').classList.remove('show'));
+el('modalOverlay').addEventListener('click', e => { if (e.target.id === 'modalOverlay') el('modalOverlay').classList.remove('show'); });
+el('modalCopy').addEventListener('click', () => {
+  const ta = el('modalText');
+  ta.select();
+  try { document.execCommand('copy'); showToast('클립보드에 복사했어요.'); }
+  catch (err) { showToast('복사에 실패했어요. 직접 선택해서 복사해주세요.'); }
+});
+
+submitBtn.addEventListener('click', saveEntry);
+cancelEditBtn.addEventListener('click', resetForm);
+el('searchInput').addEventListener('input', renderEntries);
+el('sortBy').addEventListener('change', renderEntries);
+
+el('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fishing_journal_backup_${todayStr()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('백업 파일을 다운로드했어요.');
+});
+
+el('importBtn').addEventListener('click', () => el('importFile').click());
+el('importFile').addEventListener('change', async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) { showToast('올바른 백업 파일이 아니에요.'); return; }
+      if (!confirm(`${imported.length}개의 기록을 불러와 저장할까요?`)) return;
+      for (const item of imported) {
+        if (!item.id) item.id = 'f' + Date.now() + Math.random().toString(36).slice(2,7);
+        await window.storage.set('fishing-entry:' + item.id, JSON.stringify(item), false);
+      }
+      await loadEntries();
+      showToast('불러오기를 완료했어요.');
+    } catch (err) {
+      console.error(err);
+      showToast('파일을 읽는 중 오류가 발생했어요.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+});
+
+function showToast(msg) {
+  const t = el('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+loadEntries();
+initPickMap();
+</script>
+</body>
+</html>
