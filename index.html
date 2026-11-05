@@ -3,12 +3,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>필드 트레이너</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
 <style>
-:root{--bg:#EEF1EC;--sf:#fff;--sf2:#F4F6F2;--line:#D8DED3;--fg:#17201A;--mu:#5C6A5F;--ac:#1F7A43;--ink:#fff;--soft:#DDEFE3;--red:#C93B34;--yel:#C99700;
+:root{--bg:#F5F0E1;--sf:#FFFDF6;--sf2:#EEE7D3;--line:#DCD2B6;--fg:#1A261E;--mu:#6B6B58;--ac:#14452F;--ink:#F6F1E4;--soft:#E2EAD9;--red:#9E2B25;--yel:#B08D3C;--gold:#B08D3C;
+--serif:"Cormorant Garamond","Noto Serif KR","Nanum Myeongjo",Batang,Georgia,serif;
 --font:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;color-scheme:light;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1411;--sf:#18201B;--sf2:#1F2922;--line:#2C382F;--fg:#E8EFEA;--mu:#9AAA9E;--ac:#4FCB7E;--ink:#07120B;--soft:#17301F;--red:#FF6A61;--yel:#F2C94C;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0F1411;--sf:#18201B;--sf2:#1F2922;--line:#2C382F;--fg:#E8EFEA;--mu:#9AAA9E;--ac:#4FCB7E;--ink:#07120B;--soft:#17301F;--red:#FF6A61;--yel:#F2C94C;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B1410;--sf:#12201A;--sf2:#192A22;--line:#2A3B31;--fg:#EEE7D2;--mu:#A9A690;--ac:#CDAA5C;--ink:#10190F;--soft:#1C2C22;--red:#E5675E;--yel:#D8B866;--gold:#D8B866;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0B1410;--sf:#12201A;--sf2:#192A22;--line:#2A3B31;--fg:#EEE7D2;--mu:#A9A690;--ac:#CDAA5C;--ink:#10190F;--soft:#1C2C22;--red:#E5675E;--yel:#D8B866;--gold:#D8B866;color-scheme:dark}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--font)}
@@ -41,9 +43,20 @@ nav button{flex:1;border:0;background:none;font-size:14px;padding:10px 4px;color
 .li{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line);font-size:14px}.li:first-child{border-top:0}
 .cue.ob{border:1px solid var(--red);color:var(--red);font-weight:700}input.pt{flex:1;min-width:0;font:inherit;color:inherit;background:var(--sf2);border:1px solid var(--line);border-radius:10px;padding:9px}
 .hr{display:grid;grid-template-columns:24px 1fr 1.4fr repeat(3,1fr);gap:6px;margin-bottom:6px;align-items:center;text-align:center}.hr input,.hr select,.f{width:100%;min-width:0;font:inherit;color:inherit;background:var(--sf2);border:1px solid var(--line);border-radius:8px;padding:8px 4px;text-align:center}.f{text-align:left;padding:10px;margin-bottom:8px}
+h1,h2,.big{font-family:var(--serif)}h1{letter-spacing:.01em}h2{font-size:18px}.big{font-weight:700}
+.card{border-radius:16px;border-top:2px solid var(--gold);box-shadow:0 8px 20px -14px rgba(20,69,47,.45)}
+button.pri{border-color:var(--gold);letter-spacing:.04em;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+nav{border-top:1px solid var(--gold)}nav button.on{box-shadow:inset 0 2px 0 var(--gold)}
+#app>*{animation:up .35s ease both}@keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#app>*{animation:none}}
+.hero{border-radius:18px;background:linear-gradient(160deg,#14452F,#0B2A1C);color:#F6F1E4;padding:18px 16px 0;margin-bottom:12px;border:1px solid var(--gold);overflow:hidden}
+.hero h1{color:#F6F1E4;margin:2px 0 0;font-size:30px}.hero .sub{color:#D8C894;font-size:11px;letter-spacing:.28em}
+.sc{width:100%;border-collapse:collapse;font-size:13px;text-align:center}.sc td,.sc th{padding:6px 1px;border-bottom:1px solid var(--line)}.sc th{color:var(--mu);font-weight:600}
+.m{display:inline-grid;place-items:center;min-width:22px;height:22px;font-weight:700}.m.b{border-radius:50%;border:1.5px solid var(--gold)}.m.e{border-radius:50%;border:3px double var(--gold)}.m.bo{border:1.5px solid var(--fg)}.m.db{border:3px double var(--fg)}
+nav button{font-size:13px;padding:10px 2px}.lk{display:inline-block;margin-top:8px;color:var(--ac);font-weight:700;text-decoration:none;border-bottom:1px solid var(--gold)}ol.st{margin:6px 0 0;padding-left:20px}ol.st li{margin-bottom:4px}
 </style></head><body>
 <div id="app"></div>
-<nav><button data-a="tab" data-v="today">오늘</button><button data-a="tab" data-v="run">필드 연습</button><button data-a="tab" data-v="screen">스크린</button><button data-a="tab" data-v="log">기록</button></nav>
+<nav><button data-a="tab" data-v="today">오늘</button><button data-a="tab" data-v="run">필드 연습</button><button data-a="tab" data-v="lesson">레슨</button><button data-a="tab" data-v="screen">스크린</button><button data-a="tab" data-v="log">기록</button></nav>
 <script>
 var MISS=["뒷땅","탑볼","슬라이스","훅"],SIDES=["왼쪽 끝","중앙","오른쪽 끝"],TYPES=["티샷","세컨드","어프로치","쇼트게임"];
 var WARM=["스트레칭: 어깨, 허리, 손목, 고관절을 먼저 풀기","웨지로 시작: 30~40m 짧은 스윙 10개","웨지 스윙 크기를 풀스윙까지 점차 키우기","클럽 순서: 짝수 클럽 위주로 번갈아 (드라이버부터 잡지 않기)","프리샷 루틴 5단계를 눈으로 한 번 훑기"];
@@ -54,6 +67,39 @@ var TEEC=["맞바람: 낮고 짧게 컨트롤하세요.","페어웨이가 좁습
 var LIE=["평지 라이","내리막 라이: 어깨를 경사에 맞추세요.","오르막 라이: 경사를 따라 치세요.","러프: 공 뒤 수건을 건드리지 않게 치세요.","맞바람: 한 클럽 길게, 낮게."];
 var SG="화면 거리 숫자가 아니라, 필드에서 이 거리를 보낼 때의 백스윙 크기와 낙하 지점을 먼저 상상하고 치세요.";
 var RX={"뒷땅":"공 뒤 수건 드릴로 공 앞 바닥을 치세요. 센서의 체중 이동 그래프에서 체중이 뒤에 남지 않는지 확인하세요.","탑볼":"임팩트까지 가슴 높이를 유지하세요. 체중 이동 그래프로 체중이 뒤에 남는지도 확인하세요.","슬라이스":"센서의 클럽 패스(Out-to-In 여부)와 페이스 앵글을 확인하고, 안에서 밖으로 지나가는 궤도를 천천히 연습하세요.","훅":"센서의 클럽 패스(In-to-Out 과다)와 페이스 앵글을 확인하고, 손보다 몸통 회전으로 치세요."};
+var HERO='<svg viewBox="0 0 360 96" width="100%" style="display:block;margin-top:8px" aria-hidden="true"><path d="M0 70Q90 40 180 62T360 50V96H0Z" fill="#1E5B3F"/><path d="M0 84Q110 58 210 78T360 70V96H0Z" fill="#2A7350"/><ellipse cx="268" cy="72" rx="34" ry="7" fill="#3E8A62"/><line x1="268" y1="72" x2="268" y2="24" stroke="#F6F1E4" stroke-width="1.6"/><path d="M268 24L292 32L268 40Z" fill="#B08D3C"/><circle cx="238" cy="76" r="4" fill="#F6F1E4"/></svg>';
+function holeSvg(s){var x0=24,x1=272,bx=x0;
+ if(s.ty=="세컨드")bx=x0+(x1-x0)*.45;else if(s.ty=="어프로치")bx=x1-(x1-x0)*Math.min(1,s.dist/s.len);else if(s.ty=="쇼트게임")bx=x1-(x1-x0)*Math.min(.12,s.dist/s.len);
+ var ay={"왼쪽 끝":42,"중앙":60,"오른쪽 끝":78}[s.aim],ax=bx+(x1-bx)*.55,oy=s.ob=="왼쪽"?22:98;
+ return '<svg viewBox="0 0 300 120" width="100%" style="display:block;margin-top:10px" role="img" aria-label="홀 지도"><path d="M10 52Q150 36 280 50L280 72Q150 90 10 68Z" style="fill:var(--soft);stroke:var(--line)"/><ellipse cx="274" cy="60" rx="20" ry="16" style="fill:var(--ac);opacity:.9"/><ellipse cx="236" cy="80" rx="9" ry="5" style="fill:var(--line)"/><rect x="12" y="56" width="8" height="8" rx="2" style="fill:var(--gold)"/><line x1="276" y1="60" x2="276" y2="38" style="stroke:var(--fg)" stroke-width="1.4"/><path d="M276 38l12 4-12 4z" style="fill:var(--gold)"/>'
+ +(s.ob?'<line x1="10" y1="'+oy+'" x2="290" y2="'+oy+'" style="stroke:var(--red)" stroke-width="2" stroke-dasharray="5 4"/><text x="14" y="'+(oy+(s.ob=="왼쪽"?-4:12))+'" font-size="10" style="fill:var(--red)">OB</text>':'')
+ +'<line x1="'+bx+'" y1="60" x2="'+ax+'" y2="'+ay+'" style="stroke:var(--gold)" stroke-width="1.5" stroke-dasharray="3 3"/><circle cx="'+ax+'" cy="'+ay+'" r="4.5" style="fill:none;stroke:var(--gold)" stroke-width="1.6"/><circle cx="'+bx+'" cy="60" r="5" style="fill:#fff;stroke:var(--fg)" stroke-width="1.2"/><text x="150" y="114" text-anchor="middle" font-size="11" style="fill:var(--mu)">'+s.len+'m</text></svg>'}
+function mk(sc,p){if(sc===""||sc==null)return"";var d=sc-p,c=d<=-2?"m e":d==-1?"m b":d==1?"m bo":d>=2?"m db":"";return c?'<span class="'+c+'">'+sc+'</span>':sc}
+function scard(r){var t=rt(r),hd="",pr="",sc="",P=0;r.holes.forEach(function(h,i){hd+='<th>'+(i+1)+'</th>';pr+='<td>'+h.par+'</td>';sc+='<td>'+mk(h.score,+h.par)+'</td>';P+=+h.par||0});
+ return '<table class="sc"><tr><th>홀</th>'+hd+'<th>계</th></tr><tr><th>파</th>'+pr+'<td>'+P+'</td></tr><tr><th>타수</th>'+sc+'<td><b>'+t.s+'</b></td></tr></table>'}
+function trend(){var a=R.filter(function(r){return rt(r).n==9}).sort(function(x,y){return x.date<y.date?-1:1}).slice(-10).map(function(r){return rt(r).s});if(a.length<2)return"";
+ var lo=Math.min.apply(null,a)-1,hi=Math.max.apply(null,a)+1,pts=a.map(function(v,i){return[10+i*(280/(a.length-1)),8+(hi-v)/(hi-lo)*64]});
+ return '<div class="card"><h2>스코어 추이</h2><svg viewBox="0 0 300 90" width="100%"><polyline points="'+pts.map(function(p){return p.join(",")}).join(" ")+'" style="fill:none;stroke:var(--ac)" stroke-width="2"/>'+pts.map(function(p,i){return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3.5" style="fill:var(--gold)"/><text x="'+p[0]+'" y="'+(p[1]-7)+'" font-size="9" text-anchor="middle" style="fill:var(--mu)">'+a[i]+'</text>'}).join("")+'</svg></div>'}
+/* 사진, GIF, 영상 연결 슬롯: 아래처럼 채우면 해당 카드의 애니메이션 대신 표시됩니다.
+   예) MEDIA.fat={src:"media/fat.mp4",credit:"직접 촬영"}; MEDIA.hero={src:"media/hero.jpg"}; */
+var MEDIA={};
+var KEY={"뒷땅":"fat","탑볼":"top","슬라이스":"slice","훅":"hook"},FK=0;
+var DR=[{id:"good",t:"정타: 높고 곧게",s:["공을 먼저 맞히고 그다음에 바닥을 칩니다.","임팩트에서 체중이 왼발로 이동해 있어야 합니다.","피니시까지 균형을 유지하며 타깃을 바라봅니다."],q:"골프 아이언 정타 임팩트 드릴"},
+{id:"fat",t:"뒷땅",s:["공 앞 1~2cm에 표시를 하고 그 지점에서 바닥을 치세요.","공 뒤에 수건을 놓고 닿지 않게 치는 드릴을 10개 합니다.","백스윙에서 체중이 오른발에 남지 않게 하세요."],q:"골프 뒷땅 교정 수건 드릴"},
+{id:"top",t:"탑볼",s:["임팩트까지 가슴과 시선 높이를 유지하세요.","공 중간보다 아래를 치는 느낌으로 하강 각도를 만드세요.","다운스윙에서 일어서지 말고 무릎 각도를 지키세요."],q:"골프 탑볼 교정 드릴"},
+{id:"slice",t:"슬라이스",s:["센서의 클럽 패스(Out-to-In)와 페이스 앵글을 확인하세요.","그립을 살짝 강하게 잡아 페이스가 열리지 않게 하세요.","공 오른쪽 바깥을 보고 안에서 밖으로 휘두르는 연습을 하세요."],q:"골프 슬라이스 교정"},
+{id:"hook",t:"훅",s:["센서의 클럽 패스(In-to-Out 과다)와 페이스 앵글을 확인하세요.","그립이 너무 강하지 않은지 확인하세요.","손으로 먼저 돌리지 말고 몸통 회전으로 치세요."],q:"골프 훅 교정"},
+{id:"chip",t:"어프로치 거리감",s:["화면 숫자가 아니라 필드에서 보낸 백스윙 크기를 먼저 상상하세요.","10m, 20m, 30m별 백스윙 크기를 정해 둡니다.","샷마다 낙하 지점을 정하고 그곳을 보고 치세요."],q:"골프 어프로치 거리감 백스윙 크기"},
+{id:"putt",t:"퍼팅 거리감",s:["5m, 10m, 15m별 스트로크 크기를 정해 오늘 탭에 적어두세요.","같은 템포로 크기만 바꿔 칩니다.","센서 판정보다 내 기준 거리감을 먼저 맞추세요."],q:"골프 퍼팅 거리감 연습"},
+{id:"pre",t:"프리샷 루틴",s:["공 뒤에서 타깃을 정하고 페이스를 먼저 맞춥니다.","호흡하고 빈 스윙 1~2회, 멈춤 없이 샷합니다.","연속으로 치지 말고 한 공마다 처음부터 반복합니다."],q:"골프 프리샷 루틴 연습장"}];
+function flight(k){var P={good:"M30 106C90 14 190 14 262 104",fat:"M30 106C48 90 76 90 96 106",top:"M30 106Q150 96 270 106",slice:"M30 65C120 55 200 70 270 112",hook:"M30 65C120 75 200 60 270 20"}[k];if(!P)return"";
+ var id="fp"+(FK++),td=k=="slice"||k=="hook",lab={good:"정타: 높게 뜨고 목표 근처에 안착",fat:"뒷땅: 공 뒤를 쳐서 짧게 굴러감",top:"탑볼: 낮게 날아 멀리 굴러감",slice:"슬라이스(위에서 본 모습): 목표 오른쪽으로 휨",hook:"훅(위에서 본 모습): 목표 왼쪽으로 휨"}[k];
+ var bg=td?'<rect x="10" y="40" width="280" height="50" rx="6" style="fill:var(--soft)"/><line x1="30" y1="65" x2="276" y2="65" style="stroke:var(--gold)" stroke-dasharray="4 4"/>':'<line x1="10" y1="108" x2="290" y2="108" style="stroke:var(--line)" stroke-width="2"/>';
+ return '<svg viewBox="0 0 300 130" width="100%" role="img" aria-label="'+lab+'">'+bg+'<circle cx="276" cy="'+(td?65:108)+'" r="4" style="fill:var(--gold)"/>'+(k=="fat"?'<path d="M14 108l7-6 7 6z" style="fill:var(--red)"/><text x="12" y="124" font-size="9" style="fill:var(--red)">뒷땅 자국</text>':'')
+ +'<path id="'+id+'" pathLength="1" d="'+P+'" style="fill:none;stroke:var(--ac)" stroke-width="2" stroke-dasharray="1" stroke-dashoffset="1"><animate attributeName="stroke-dashoffset" from="1" to="0" dur="2.2s" repeatCount="indefinite"/></path><circle r="5" style="fill:#fff;stroke:var(--fg)"><animateMotion dur="2.2s" repeatCount="indefinite"><mpath href="#'+id+'"/></animateMotion></circle></svg><div class="mu" style="margin:4px 0 8px">'+lab+'</div>'}
+function media(id){var m=MEDIA[id];if(m&&m.src){var v=/\.(mp4|webm)$/i.test(m.src);return (v?'<video src="'+esc(m.src)+'" autoplay muted loop playsinline controls style="width:100%;border-radius:12px"></video>':'<img src="'+esc(m.src)+'" alt="'+esc(m.alt||id)+'" loading="lazy" style="width:100%;border-radius:12px">')+(m.credit?'<div class="mu" style="margin:4px 0 8px">'+esc(m.credit)+'</div>':'')}return flight(id)}
+function heroArt(){var m=MEDIA.hero;return m&&m.src?'<img src="'+esc(m.src)+'" alt="" style="display:block;width:calc(100% + 32px);margin:8px -16px 0;height:130px;object-fit:cover">':HERO}
+function vLesson(){return '<h1>레슨</h1><div class="card mu">미스 유형별 구질 애니메이션과 연습 방법입니다. 영상 검색을 누르면 유튜브에서 해당 주제 영상을 볼 수 있습니다.</div>'+DR.map(function(d){return '<div class="card"><h2>'+d.t+'</h2>'+media(d.id)+'<ol class="st">'+d.s.map(function(x){return '<li>'+x+'</li>'}).join("")+'</ol><a class="lk" href="https://www.youtube.com/results?search_query='+encodeURIComponent(d.q)+'" target="_blank" rel="noopener">영상 검색 ↗</a></div>'}).join("")}
 var tab="today",run=null,done=null,PT=["5","10","15"];
 function ld(){try{var s=JSON.parse(localStorage.getItem("gft"));if(s&&s.sessions){s.putt=s.putt||{};return s}}catch(e){}return{sessions:[],checks:{},notes:{},putt:{}}}
 var S=ld();
@@ -79,7 +125,7 @@ function wl(){var k=dk(),c=S.checks[k]||[0,0,0,0,0];return WARM.map(function(t,i
 function vToday(){var k=dk(),n=streak(),w=["일","월","화","수","목","금","토"],h="";
  for(var i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);h+='<div class="dot '+(active(dk(d))?"on ":"")+(i==0?"t":"")+'"><i></i><b>'+w[d.getDay()]+'</b></div>'}
  var pt=PT.map(function(m){return '<div class="row" style="margin-bottom:6px"><span style="width:38px">'+m+'m</span><input class="pt" data-p="'+m+'" placeholder="예: 오른발 엄지까지" value="'+esc(S.putt[m]||"")+'"></div>'}).join("");
- return '<h1>필드 트레이너</h1><div class="card"><div class="row sp"><div><div class="mu">연속 연습</div><div class="big">'+n+'일</div></div><div class="mu" style="text-align:right">총 '+S.sessions.length+'회 세션</div></div><div class="dots" style="margin-top:12px">'+h+'</div></div>'
+ return '<div class="hero"><div class="sub">FIELD TRAINER</div><h1>필드 트레이너</h1>'+heroArt()+'</div><div class="card"><div class="row sp"><div><div class="mu">연속 연습</div><div class="big">'+n+'일</div></div><div class="mu" style="text-align:right">총 '+S.sessions.length+'회 세션</div></div><div class="dots" style="margin-top:12px">'+h+'</div></div>'
  +'<div class="card"><h2>오늘의 한 가지</h2><div>'+TIPS[new Date().getDate()%TIPS.length]+'</div></div>'
  +'<div class="card"><h2>연습 흐름</h2><div class="mu">1 몸풀기 → 2 프리샷 루틴 5단계 → 3 가상 9홀(거리, 클럽, 타깃, OB 랜덤) → 4 쇼트게임과 퍼팅 거리감, 센서 피드백</div></div>'
  +'<div class="card"><h2>1단계 몸풀기</h2>'+wl()+'</div>'
@@ -95,7 +141,7 @@ function vRun(){
  var rb=MISS.map(function(m){return '<button class="rb" data-a="res" data-v="'+m+'">'+m+'</button>'}).join("");
  var info=s.ty=="티샷"?"홀 길이 "+s.len+"m":(s.ty=="쇼트게임"?"그린까지 "+s.dist+"m":"남은 거리 "+s.dist+"m");
  return '<div class="row sp mu"><span>'+s.h+'번 홀 · 파'+s.par+' · '+s.len+'m</span><span>'+(run.i+1)+' / '+run.plan.length+'</span></div><div class="prog"><i style="width:'+pct(run.i,run.plan.length)+'%"></i></div>'
- +'<div class="card"><div class="mu">'+s.ty+'</div><div class="big">'+s.club+'</div><div class="mu" style="margin-top:2px">'+info+'</div>'
+ +'<div class="card"><div class="mu">'+s.ty+'</div><div class="big">'+s.club+'</div><div class="mu" style="margin-top:2px">'+info+'</div>'+holeSvg(s)
  +'<div class="cue"><b>타깃</b> '+s.aim+'. 화면 속 나무나 벙커 끝 같은 지형지물을 하나 정하세요.</div>'
  +(s.ob?'<div class="cue ob">⚠ '+s.ob+'쪽 OB. 미스는 벌타 1</div>':'')+'<div class="cue">'+s.cue+'</div></div>'
  +'<div class="mu">프리샷 루틴 (공 뒤에서 시작)</div><div class="chips">'+ch+'</div><div class="mu" style="margin-bottom:8px">임팩트 기준으로 결과를 고르세요</div><div class="grid"><button class="rb g" data-a="res" data-v="굿">좋은 샷</button>'+rb+'</div>'
@@ -107,7 +153,7 @@ function bars(m,n){return MISS.map(function(x){return '<div class="row sp"><span
 function vDone(){var a=sum(done.sh),top=null,mx=0;MISS.forEach(function(x){if(a.m[x]>mx){mx=a.m[x];top=x}});
  return '<h1>오늘 라운드 결과</h1><div class="card"><div class="row sp"><div><div class="mu">좋은 샷</div><div class="big">'+a.g+'/'+a.n+'</div></div><div style="text-align:center"><div class="mu">루틴 완주</div><div class="big">'+pct(a.r,a.n)+'%</div></div><div style="text-align:right"><div class="mu">OB 벌타</div><div class="big">'+a.pen+'</div></div></div></div>'
  +'<div class="card"><h2>샷 종류별 좋은 샷</h2>'+tyb(a.ty)+'</div><div class="card"><h2>미스 분포</h2>'+bars(a.m,a.n)+'</div>'
- +(top?'<div class="card"><h2>다음 연습 처방: '+top+'</h2><div>'+RX[top]+'</div></div>':'<div class="card">미스 없이 마쳤습니다. 다음에는 OB 구역을 더 넓게 잡아보세요.</div>')
+ +(top?'<div class="card"><h2>다음 연습 처방: '+top+'</h2>'+media(KEY[top])+'<div>'+RX[top]+'</div></div>':'<div class="card">미스 없이 마쳤습니다. 다음에는 OB 구역을 더 넓게 잡아보세요.</div>')
  +'<button class="pri" data-a="again">한 번 더</button>'}
 function vLog(){var tot={n:0,g:0,r:0,pen:0,m:{},ty:{}};MISS.forEach(function(x){tot.m[x]=0});TYPES.forEach(function(t){tot.ty[t]=[0,0]});
  S.sessions.forEach(function(s){tot.n+=s.n;tot.g+=s.g;tot.r+=s.r;tot.pen+=s.pen||0;MISS.forEach(function(x){tot.m[x]+=s.m[x]||0});if(s.ty)TYPES.forEach(function(t){if(s.ty[t]){tot.ty[t][0]+=s.ty[t][0];tot.ty[t][1]+=s.ty[t][1]}})});
@@ -115,7 +161,7 @@ function vLog(){var tot={n:0,g:0,r:0,pen:0,m:{},ty:{}};MISS.forEach(function(x){
  return '<h1>기록</h1><div class="card"><div class="row sp"><div><div class="mu">누적 좋은 샷</div><div class="big">'+pct(tot.g,tot.n)+'%</div></div><div style="text-align:right"><div class="mu">누적 샷</div><div class="big">'+tot.n+'</div></div></div></div>'
  +'<div class="card"><h2>샷 종류별 좋은 샷</h2>'+(tot.n?tyb(tot.ty):'<div class="mu">데이터가 쌓이면 표시됩니다.</div>')+'</div>'
  +'<div class="card"><h2>누적 미스 유형</h2>'+(tot.n?bars(tot.m,tot.n):'<div class="mu">데이터가 쌓이면 표시됩니다.</div>')+'</div><div class="card"><h2>최근 세션</h2>'+ls+'</div>'+stbar()+'<button data-a="backup" style="width:100%">백업 파일 저장</button><button data-a="restore" style="width:100%;margin-top:8px">백업에서 복원</button><input type="file" id="rf" accept=".json" hidden>'}
-function render(){var v=tab=="today"?vToday():tab=="run"?vRun():tab=="screen"?vScreen():vLog();document.getElementById("app").innerHTML=v;
+function render(){var v=tab=="today"?vToday():tab=="run"?vRun():tab=="screen"?vScreen():tab=="lesson"?vLesson():vLog();document.getElementById("app").innerHTML=v;
  document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b.dataset.v==tab)})}
 function finish(){var a=sum(run.sh);S.sessions.push({date:dk(),n:a.n,g:a.g,r:a.r,m:a.m,pen:a.pen,ty:a.ty});sv();done={sh:run.sh};run=null}
 document.addEventListener("click",function(e){var b=e.target.closest("[data-a]");if(!b)return;var a=b.dataset.a,v=b.dataset.v;
@@ -142,6 +188,7 @@ function newF(cc){var h=[];for(var i=0;i<9;i++)h.push({par:4,dist:"",score:"",pu
 F=newF();
 function base(){return "data/users/"+UID}
 function rt(r){var s=0,p=0,pt=0,pn=0,n=0,dm=0;r.holes.forEach(function(h){dm+=parseInt(h.dist)||0;var sc=parseInt(h.score);if(!isNaN(sc)){s+=sc;p+=(+h.par||0);n++}pt+=parseInt(h.putt)||0;pn+=parseInt(h.pen)||0});return{s:s,d:s-p,pt:pt,pn:pn,n:n,dm:dm}}
+function lt(){return R.slice().sort(function(a,b){return a.date<b.date?1:-1})[0]}
 function sg(d){return(d>0?"+":"")+d}
 function tt(t){return (t.dm?"총 "+t.dm+"m · ":"")+"합계 "+t.s+"타 ("+sg(t.d)+") · 퍼트 "+t.pt+" · 벌타 "+t.pn}
 function saveR(r){try{localStorage.setItem("gft_r",JSON.stringify(R))}catch(e){}
@@ -150,7 +197,7 @@ function stat(){var ok=R.map(rt).filter(function(t){return t.n==9});if(!ok.lengt
  var avg=ok.reduce(function(a,t){return a+t.s},0)/ok.length,best=Math.min.apply(null,ok.map(function(t){return t.s})),m={};
  R.forEach(function(r){var t=rt(r);if(t.n==9&&r.cc){m[r.cc]=m[r.cc]||[0,0];m[r.cc][0]+=t.s;m[r.cc][1]++}});
  var cc=Object.keys(m).map(function(k){return '<div class="li"><span>'+esc(k)+'</span><span class="mu">평균 '+(m[k][0]/m[k][1]).toFixed(1)+' · '+m[k][1]+'회</span></div>'}).join("");
- return '<div class="card"><div class="row sp"><div><div class="mu">평균 (9홀)</div><div class="big">'+avg.toFixed(1)+'</div></div><div style="text-align:center"><div class="mu">베스트</div><div class="big">'+best+'</div></div><div style="text-align:right"><div class="mu">라운드</div><div class="big">'+R.length+'</div></div></div></div><div class="card"><h2>CC별 평균</h2>'+cc+'</div>'}
+ return '<div class="card"><div class="row sp"><div><div class="mu">평균 (9홀)</div><div class="big">'+avg.toFixed(1)+'</div></div><div style="text-align:center"><div class="mu">베스트</div><div class="big">'+best+'</div></div><div style="text-align:right"><div class="mu">라운드</div><div class="big">'+R.length+'</div></div></div></div><div class="card"><h2>CC별 평균</h2>'+cc+'</div>'+trend()}
 function stbar(){return CLOUD?'<div class="mu" style="margin-bottom:8px">☁ 계정에 저장 중입니다. 기기를 바꿔도 유지됩니다.</div>':'<div class="mu" style="margin-bottom:8px">⚠ 이 기기 브라우저에만 저장 중입니다. 기록 탭의 백업 파일을 주기적으로 저장해 두세요.</div>'}
 function vScreen(){
  var rows=F.holes.map(function(h,i){return '<div class="hr"><span>'+(i+1)+'</span>'+'<select data-h="'+i+'" data-k="par">'+[3,4,5].map(function(p){return '<option'+(+h.par==p?" selected":"")+'>'+p+'</option>'}).join("")+'</select>'+[["dist","거리m"],["score","타수"],["putt","퍼트"],["pen","벌타"]].map(function(k){return '<input type="number" inputmode="numeric" data-h="'+i+'" data-k="'+k[0]+'" value="'+(h[k[0]]==null?"":h[k[0]])+'" placeholder="'+k[1]+'">'}).join("")+'</div>'}).join("");
@@ -164,7 +211,7 @@ function vScreen(){
  +'<div class="hr mu"><span>홀</span><span>파</span><span>거리</span><span>타수</span><span>퍼트</span><span>벌타</span></div>'+rows
  +'<div id="tot" class="mu" style="margin:6px 0">'+tt(rt(F))+'</div><textarea data-f="memo" placeholder="복기 메모 (잘된 홀, 아쉬운 홀)">'+esc(F.memo)+'</textarea>'
  +'<button class="pri" data-a="save_round" style="margin-top:10px">'+(F.id?"수정 저장":"라운드 저장")+'</button>'+(F.id?'<button data-a="newr" style="width:100%;margin-top:8px">새 라운드 쓰기</button>':'')+'</div>'
- +stat()+'<div class="card"><h2>저장된 라운드</h2>'+list+'<div class="mu" style="margin-top:8px">누르면 수정할 수 있습니다. 삭제 기능은 없습니다.</div></div>'}
+ +(R.length?'<div class="card"><h2>최근 스코어카드</h2><div class="mu" style="margin-bottom:6px">'+lt().date+' · '+esc(lt().cc||"코스 미입력")+'</div>'+scard(lt())+'<div class="mu" style="margin-top:8px">◯ 버디 ◎ 이글 □ 보기 ▣ 더블 이상</div></div>':'')+stat()+'<div class="card"><h2>저장된 라운드</h2>'+list+'<div class="mu" style="margin-top:8px">누르면 수정할 수 있습니다. 삭제 기능은 없습니다.</div></div>'}
 async function initDB(){try{if(!window.claude||!claude.use)return;var u=await claude.use("user"),d=await claude.use("db");if(!u||!d)return;UID=await u.id();DB=d;
  var ts=await DB.doc(base()+"/train").get();
  if(ts.exists){var rd=ts.data();if(rd&&rd.sessions){rd.putt=rd.putt||{};rd.checks=rd.checks||{};rd.notes=rd.notes||{};S=rd;try{localStorage.setItem("gft",JSON.stringify(S))}catch(e){}}}else{await DB.doc(base()+"/train").set(S)}
