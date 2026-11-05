@@ -1,790 +1,182 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>낚시 일지</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>필드 트레이너</title>
 <style>
-  :root {
-    --bg: #E6E7DC;
-    --bg-card: #F5F5EC;
-    --sea: #1F3A4D;
-    --sea-light: #3C6178;
-    --amber: #B8752E;
-    --amber-soft: #F0DFC2;
-    --ink: #26302F;
-    --ink-soft: #6E7A78;
-    --ink-faint: #9BA6A3;
-    --line: #C7CCB9;
-    --line-soft: #DEE1D2;
-    --good: #2E6B5E;
-    --good-soft: #DCEAE5;
-    --warn: #A17A2A;
-    --warn-soft: #F0E4C6;
-    --note: #3E4F73;
-    --note-soft: #DDE1EE;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    background-image: radial-gradient(circle at 1px 1px, rgba(38,48,47,0.05) 1px, transparent 0);
-    background-size: 22px 22px;
-    color: var(--ink);
-    font-family: 'IBM Plex Sans KR', sans-serif;
-    min-height: 100vh;
-    padding: 28px 16px 80px;
-  }
-  .wrap { max-width: 720px; margin: 0 auto; }
-
-  header {
-    display: flex; align-items: flex-end; justify-content: space-between;
-    margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid var(--sea);
-    flex-wrap: wrap; gap: 10px;
-  }
-  .title-block { display: flex; align-items: center; gap: 11px; }
-  .fish-mark { width: 32px; height: 32px; flex-shrink: 0; }
-  h1 { font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px; margin: 0; color: var(--sea); letter-spacing: -0.01em; }
-  .subtitle { font-size: 11px; color: var(--ink-soft); margin-top: 2px; font-family: 'IBM Plex Mono', monospace; }
-
-  .header-actions { display: flex; gap: 8px; }
-  .ghost-btn {
-    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; padding: 7px 12px;
-    border: 1px solid var(--line); background: var(--bg-card); color: var(--ink-soft);
-    border-radius: 7px; cursor: pointer;
-  }
-  .ghost-btn:hover { border-color: var(--sea); color: var(--sea); }
-
-  .stats {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    background: var(--sea); border-radius: 10px; overflow: hidden;
-    margin-bottom: 24px; box-shadow: 0 6px 16px rgba(31,58,77,0.2);
-  }
-  .stat { padding: 13px 8px; text-align: center; border-right: 1px solid rgba(255,255,255,0.12); }
-  .stat:last-child { border-right: none; }
-  .stat-num { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; color: #F5F5EC; }
-  .stat-label { font-size: 10px; color: rgba(245,245,236,0.65); margin-top: 2px; }
-
-  .write-card {
-    background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px;
-    padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 0 var(--line-soft);
-  }
-  .write-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-  .write-head h2 { font-family: 'Fraunces', serif; font-size: 17px; margin: 0; color: var(--sea); font-weight: 600; }
-  .cancel-edit { display: none; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-faint); background: none; border: none; text-decoration: underline; cursor: pointer; }
-  .cancel-edit.show { display: inline; }
-
-  .form-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-  .form-row > div { flex: 1; min-width: 130px; }
-  label { display: block; font-size: 10.5px; color: var(--ink-soft); margin-bottom: 4px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 0.03em; }
-  input, textarea, select {
-    width: 100%; border: 1px solid var(--line); background: #fff; border-radius: 7px;
-    padding: 9px 10px; font-family: 'IBM Plex Sans KR', sans-serif; font-size: 13.5px; color: var(--ink);
-  }
-  input:focus, textarea:focus, select:focus { outline: 2px solid var(--sea-light); outline-offset: 1px; }
-  textarea { resize: vertical; min-height: 56px; font-family: inherit; }
-
-  .weather-row, .species-row { display: flex; flex-wrap: wrap; gap: 6px; }
-  .weather-opt { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 16px; background: #fff; cursor: pointer; }
-  .weather-opt.selected { border-color: var(--sea); background: #E1E8EA; }
-  .species-opt { padding: 6px 12px; border: 1px solid var(--line); border-radius: 20px; font-size: 12px; color: var(--ink-soft); background: #fff; cursor: pointer; user-select: none; }
-  .species-opt.selected { border-color: var(--good); background: var(--good-soft); color: var(--good); }
-
-  .rating-row { display: flex; align-items: center; gap: 4px; padding: 4px 0; }
-  .star { font-size: 22px; color: var(--line); cursor: pointer; line-height: 1; }
-  .star.filled { color: var(--amber); }
-  .rating-label { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft); margin-left: 8px; }
-
-  .field-catch label { color: var(--good); }
-  .field-note label { color: var(--note); }
-
-  .submit-btn {
-    width: 100%; margin-top: 8px; padding: 12px; background: var(--sea); color: #F5F5EC;
-    border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
-    font-family: 'IBM Plex Sans KR', sans-serif;
-  }
-  .submit-btn:hover { background: var(--sea-light); }
-  .submit-btn:disabled { opacity: 0.5; cursor: default; }
-
-  .cat-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
-  .cat-tab {
-    font-family: 'IBM Plex Mono', monospace; font-size: 12px; padding: 7px 13px;
-    border: 1px solid var(--line); border-radius: 20px; background: var(--bg-card);
-    color: var(--ink-soft); cursor: pointer; user-select: none;
-  }
-  .cat-tab.active { background: var(--sea); border-color: var(--sea); color: #F5F5EC; }
-  .cat-tab .count { opacity: 0.7; margin-left: 3px; }
-
-  .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-  .filter-bar input[type="text"] { flex: 1; min-width: 140px; }
-  .filter-bar select { width: auto; flex-shrink: 0; }
-
-  .entries-head { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 12px 4px; }
-
-  .entry { position: relative; background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
-  .entry::before { content: ''; position: absolute; top: -1px; left: 16px; right: 16px; height: 1px; background-image: repeating-linear-gradient(to right, var(--line) 0 6px, transparent 6px 12px); }
-  .entry-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; padding: 15px 18px; cursor: pointer; user-select: none; }
-  .entry-top:hover { background: rgba(31,58,77,0.04); }
-  .entry-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .entry-chevron { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-faint); margin-right: 2px; display: inline-block; transition: transform 0.15s ease; }
-  .entry.open .entry-chevron { transform: rotate(90deg); }
-  .entry-date { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600; color: var(--ink); }
-  .entry-loc { font-size: 11px; color: var(--sea); background: #E1E8EA; padding: 2px 9px; border-radius: 20px; }
-  .entry-theme { font-size: 13px; color: var(--ink-soft); margin-top: 3px; }
-  .entry-side { text-align: right; flex-shrink: 0; }
-  .entry-stars { font-size: 13px; color: var(--amber); letter-spacing: 1px; }
-  .entry-meta2 { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); margin-top: 3px; }
-
-  .entry-details { display: none; padding: 0 18px 16px; }
-  .entry.open .entry-details { display: block; }
-
-  .entry-infobar { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--ink-soft); }
-  .entry-infobar b { color: var(--ink); font-weight: 600; }
-
-  .entry-species { display: flex; flex-wrap: wrap; gap: 5px; margin: 2px 0 8px; }
-  .entry-species span { font-size: 10.5px; color: var(--good); background: var(--good-soft); padding: 2px 8px; border-radius: 20px; }
-
-  .note-block { border-radius: 8px; padding: 9px 12px; font-size: 13px; line-height: 1.6; margin-top: 8px; white-space: pre-wrap; }
-  .note-block .note-tag { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; display: block; margin-bottom: 3px; font-weight: 600; }
-  .note-catch { background: var(--good-soft); color: #1B3A32; }
-  .note-catch .note-tag { color: var(--good); }
-  .note-note { background: var(--note-soft); color: #232F49; }
-  .note-note .note-tag { color: var(--note); }
-
-  .entry-actions { margin-top: 12px; display: flex; gap: 12px; }
-  .entry-actions button { background: none; border: none; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-faint); cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
-  .entry-actions button:hover { color: var(--amber); }
-
-  .empty-state { text-align: center; padding: 44px 20px; color: var(--ink-soft); }
-  .empty-state p { font-size: 13.5px; margin: 4px 0; }
-  .loading { text-align: center; padding: 40px; color: var(--ink-soft); font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
-
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(38,48,47,0.45); align-items: center; justify-content: center; padding: 16px; z-index: 50; }
-  .modal-overlay.show { display: flex; }
-  .modal-box { background: var(--bg-card); border-radius: 12px; max-width: 480px; width: 100%; padding: 20px; border: 1px solid var(--line); }
-  .modal-box h3 { font-family: 'Fraunces', serif; font-size: 16px; margin: 0 0 4px; color: var(--sea); }
-  .modal-box p { font-size: 12px; color: var(--ink-soft); margin: 0 0 10px; }
-  .modal-box textarea { min-height: 200px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
-  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
-  .modal-actions button { font-family: 'IBM Plex Sans KR', sans-serif; font-size: 13px; padding: 8px 14px; border-radius: 7px; cursor: pointer; }
-  .modal-actions .close-btn { background: none; border: 1px solid var(--line); color: var(--ink-soft); }
-  .modal-actions .copy-btn { background: var(--sea); border: none; color: #F5F5EC; }
-
-  .toast {
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background: var(--sea); color: #F5F5EC; padding: 10px 18px; border-radius: 8px;
-    font-size: 13px; opacity: 0; pointer-events: none; transition: all 0.25s ease; z-index: 60;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-  #importFile { display: none; }
-
-  /* Map picker + entry map */
-  .pick-coord { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); margin-top: 6px; }
-  #pickMap { height: 200px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-  .entry-map { margin: 4px 0 8px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
-  .entry-map img { display: block; width: 100%; height: auto; }
-  .entry-map-links { font-family: 'IBM Plex Mono', monospace; font-size: 11px; margin-bottom: 8px; }
-  .entry-map-links a { color: var(--sea); text-decoration: underline; text-underline-offset: 2px; }
-  .entry-map-links span { color: var(--ink-faint); margin: 0 4px; }
-</style>
-</head>
-<body>
-
-<div class="wrap">
-  <header>
-    <div class="title-block">
-      <svg class="fish-mark" viewBox="0 0 40 40" fill="none">
-        <path d="M6 20c4-8 14-12 22-9-2 3-3 6-3 9s1 6 3 9c-8 3-18-1-22-9z" fill="#1F3A4D"/>
-        <circle cx="12" cy="18" r="1.4" fill="#F5F5EC"/>
-        <path d="M28 12c3 3 3 13 0 16" stroke="#B8752E" stroke-width="2" stroke-linecap="round" fill="none"/>
-      </svg>
-      <div>
-        <h1>낚시 일지</h1>
-        <div class="subtitle">FISHING LOG</div>
-      </div>
-    </div>
-    <div class="header-actions">
-      <button class="ghost-btn" id="exportBtn">백업 내보내기</button>
-      <button class="ghost-btn" id="importBtn">불러오기</button>
-      <input type="file" id="importFile" accept=".json">
-    </div>
-  </header>
-
-  <div class="stats">
-    <div class="stat"><div class="stat-num" id="statTrips">–</div><div class="stat-label">총 출조</div></div>
-    <div class="stat"><div class="stat-num" id="statFish">–</div><div class="stat-label">누적 마리수</div></div>
-    <div class="stat"><div class="stat-num" id="statRating">–</div><div class="stat-label">평균 조황 만족도</div></div>
-    <div class="stat"><div class="stat-num" id="statSpecies" style="font-size:14px;">–</div><div class="stat-label">최다 어종</div></div>
-  </div>
-
-  <div class="write-card">
-    <div class="write-head">
-      <h2 id="formTitle">출조 기록 작성</h2>
-      <button class="cancel-edit" id="cancelEditBtn">취소 (새 일지 쓰기)</button>
-    </div>
-
-    <div class="form-row">
-      <div>
-        <label>날짜</label>
-        <input type="date" id="f-date">
-      </div>
-      <div>
-        <label>물때</label>
-        <input type="text" id="f-tide" placeholder="예: 7물, 사리">
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div>
-        <label>장소 (지역)</label>
-        <input type="text" id="f-region" placeholder="예: 여수, 통영, 대청호">
-      </div>
-      <div>
-        <label>상세 위치 / 포인트</label>
-        <input type="text" id="f-spot" placeholder="예: OO방파제, OO자리">
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div style="flex: 1 1 100%;">
-        <label>위치 지도에 찍기 (선택)</label>
-        <div id="pickMap"></div>
-        <div class="pick-coord" id="pickCoordLabel">지도를 클릭해서 대충 위치를 찍어보세요</div>
-        <button type="button" class="ghost-btn" id="clearPinBtn" style="margin-top:6px;">위치 지우기</button>
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div>
-        <label>날씨</label>
-        <div class="weather-row" id="weatherRow">
-          <div class="weather-opt" data-w="☀️">☀️</div>
-          <div class="weather-opt" data-w="⛅">⛅</div>
-          <div class="weather-opt" data-w="☁️">☁️</div>
-          <div class="weather-opt" data-w="🌧️">🌧️</div>
-          <div class="weather-opt" data-w="💨">💨</div>
-          <div class="weather-opt" data-w="❄️">❄️</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div>
-        <label>미끼 / 채비</label>
-        <input type="text" id="f-bait" placeholder="예: 크릴, 지그헤드, 갯지렁이">
-      </div>
-      <div>
-        <label>총 마리수</label>
-        <input type="number" id="f-count" placeholder="예: 12">
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div>
-        <label>잡은 어종</label>
-        <div class="species-row" id="speciesRow"></div>
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div>
-        <label>오늘 조황 만족도</label>
-        <div class="rating-row" id="ratingRow">
-          <span class="star" data-v="1">★</span>
-          <span class="star" data-v="2">★</span>
-          <span class="star" data-v="3">★</span>
-          <span class="star" data-v="4">★</span>
-          <span class="star" data-v="5">★</span>
-          <span class="rating-label" id="ratingLabel">3 / 5</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="form-row field-catch">
-      <div>
-        <label>조과 상세</label>
-        <textarea id="f-catchdetail" placeholder="사이즈, 시간대별 입질, 특이사항 등…"></textarea>
-      </div>
-    </div>
-    <div class="form-row field-note">
-      <div>
-        <label>메모 / 참고사항</label>
-        <textarea id="f-note" placeholder="다음에 기억할 점, 포인트 특징, 물때 타이밍 등…"></textarea>
-      </div>
-    </div>
-
-    <button class="submit-btn" id="submitBtn">출조 기록 저장하기</button>
-  </div>
-
-  <div class="cat-tabs" id="catTabs"></div>
-
-  <div class="filter-bar">
-    <input type="text" id="searchInput" placeholder="장소, 어종, 메모 검색…">
-    <select id="sortBy">
-      <option value="newest">최신순</option>
-      <option value="oldest">오래된순</option>
-      <option value="highest">만족도 높은순</option>
-    </select>
-  </div>
-
-  <div id="entriesArea">
-    <div class="loading">불러오는 중…</div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal-box">
-    <h3>텍스트로 복사</h3>
-    <p>카카오톡 '나와의 채팅'이나 노션 등에 바로 붙여넣기 좋은 포맷이에요.</p>
-    <textarea id="modalText" readonly></textarea>
-    <div class="modal-actions">
-      <button class="close-btn" id="modalClose">닫기</button>
-      <button class="copy-btn" id="modalCopy">클립보드로 복사</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
+:root{--bg:#EEF1EC;--sf:#fff;--sf2:#F4F6F2;--line:#D8DED3;--fg:#17201A;--mu:#5C6A5F;--ac:#1F7A43;--ink:#fff;--soft:#DDEFE3;--red:#C93B34;--yel:#C99700;
+--font:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1411;--sf:#18201B;--sf2:#1F2922;--line:#2C382F;--fg:#E8EFEA;--mu:#9AAA9E;--ac:#4FCB7E;--ink:#07120B;--soft:#17301F;--red:#FF6A61;--yel:#F2C94C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0F1411;--sf:#18201B;--sf2:#1F2922;--line:#2C382F;--fg:#E8EFEA;--mu:#9AAA9E;--ac:#4FCB7E;--ink:#07120B;--soft:#17301F;--red:#FF6A61;--yel:#F2C94C;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--font)}
+#app{max-width:560px;margin:0 auto;padding:16px 14px 96px}
+h1{font-size:22px;margin:4px 0 12px}h2{font-size:16px;margin:0 0 8px}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.mu{color:var(--mu);font-size:13px}
+.row{display:flex;gap:8px;align-items:center}.sp{justify-content:space-between}
+.big{font-size:34px;font-weight:800;line-height:1.1}
+button{font:inherit;color:inherit;border:1px solid var(--line);background:var(--sf2);border-radius:12px;padding:10px 12px;cursor:pointer}
+button.pri{background:var(--ac);color:var(--ink);border-color:var(--ac);font-weight:700;width:100%;padding:14px;font-size:16px}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line);cursor:pointer}
+.chk:first-of-type{border-top:0}
+.box{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);flex:none;display:grid;place-items:center;font-size:14px;margin-top:1px}
+.on .box{background:var(--ac);border-color:var(--ac);color:var(--ink)}
+.dots{display:flex;gap:6px}.dot{flex:1;text-align:center;font-size:12px;color:var(--mu)}
+.dot i{display:block;height:28px;border-radius:8px;background:var(--sf2);border:1px solid var(--line);margin-bottom:3px}
+.dot.on i{background:var(--ac);border-color:var(--ac)}.dot.t b{color:var(--fg)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.chip{border-radius:20px;padding:8px 12px;font-size:14px}.chip.on{background:var(--soft);border-color:var(--ac);color:var(--ac);font-weight:700}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rb{padding:16px 8px;font-size:16px;font-weight:700}.rb.g{background:var(--soft);border-color:var(--ac);color:var(--ac);grid-column:1/-1}
+.bar{height:10px;border-radius:6px;background:var(--sf2);overflow:hidden;margin:4px 0 10px}.bar i{display:block;height:100%;background:var(--ac)}
+.bar.m i{background:var(--red)}
+.prog{height:6px;background:var(--sf2);border-radius:4px;overflow:hidden;margin-bottom:12px}.prog i{display:block;height:100%;background:var(--ac)}
+textarea{width:100%;min-height:64px;font:inherit;color:inherit;background:var(--sf2);border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--sf);border-top:1px solid var(--line);display:flex;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+nav button{flex:1;border:0;background:none;font-size:14px;padding:10px 4px;color:var(--mu)}nav button.on{color:var(--ac);font-weight:800}
+.cue{background:var(--sf2);border-radius:10px;padding:10px 12px;margin-top:10px}
+.li{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line);font-size:14px}.li:first-child{border-top:0}
+.cue.ob{border:1px solid var(--red);color:var(--red);font-weight:700}input.pt{flex:1;min-width:0;font:inherit;color:inherit;background:var(--sf2);border:1px solid var(--line);border-radius:10px;padding:9px}
+.hr{display:grid;grid-template-columns:24px 1fr 1.4fr repeat(3,1fr);gap:6px;margin-bottom:6px;align-items:center;text-align:center}.hr input,.hr select,.f{width:100%;min-width:0;font:inherit;color:inherit;background:var(--sf2);border:1px solid var(--line);border-radius:8px;padding:8px 4px;text-align:center}.f{text-align:left;padding:10px;margin-bottom:8px}
+</style></head><body>
+<div id="app"></div>
+<nav><button data-a="tab" data-v="today">오늘</button><button data-a="tab" data-v="run">필드 연습</button><button data-a="tab" data-v="screen">스크린</button><button data-a="tab" data-v="log">기록</button></nav>
 <script>
-const SPECIES = ['우럭','광어','감성돔','참돔','농어','전갱이','벵에돔','갈치','오징어','붕어','배스','잉어','기타'];
-const REGIONS = []; // freeform, no fixed category list
-
-let selectedSpecies = [];
-let selectedWeather = null;
-let rating = 3;
-let editingId = null;
-let entries = [];
-let activeCategory = 'ALL';
-let expandedIds = new Set();
-let pickedLat = null, pickedLng = null, pickMap, pickMarker;
-
-const el = id => document.getElementById(id);
-const dateEl = el('f-date'), tideEl = el('f-tide'), regionEl = el('f-region'), spotEl = el('f-spot'),
-      baitEl = el('f-bait'), countEl = el('f-count'), catchDetailEl = el('f-catchdetail'), noteEl = el('f-note'),
-      submitBtn = el('submitBtn'), entriesArea = el('entriesArea'), speciesRow = el('speciesRow'),
-      weatherRow = el('weatherRow'), ratingRow = el('ratingRow'), ratingLabel = el('ratingLabel'),
-      formTitle = el('formTitle'), cancelEditBtn = el('cancelEditBtn');
-
-function todayStr() {
-  const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-}
-dateEl.value = todayStr();
-
-function renderSpeciesChips() {
-  speciesRow.innerHTML = SPECIES.map(s => `<div class="species-opt ${selectedSpecies.includes(s)?'selected':''}" data-s="${s}">${s}</div>`).join('');
-}
-renderSpeciesChips();
-speciesRow.addEventListener('click', e => {
-  const opt = e.target.closest('.species-opt');
-  if (!opt) return;
-  const s = opt.dataset.s;
-  selectedSpecies = selectedSpecies.includes(s) ? selectedSpecies.filter(x=>x!==s) : [...selectedSpecies, s];
-  renderSpeciesChips();
-});
-
-weatherRow.addEventListener('click', e => {
-  const opt = e.target.closest('.weather-opt');
-  if (!opt) return;
-  const w = opt.dataset.w;
-  selectedWeather = (selectedWeather === w) ? null : w;
-  [...weatherRow.children].forEach(c => c.classList.toggle('selected', c.dataset.w === selectedWeather));
-});
-
-function renderStars() {
-  [...ratingRow.querySelectorAll('.star')].forEach(s => s.classList.toggle('filled', Number(s.dataset.v) <= rating));
-  ratingLabel.textContent = rating + ' / 5';
-}
-renderStars();
-ratingRow.addEventListener('click', e => {
-  const s = e.target.closest('.star');
-  if (!s) return;
-  rating = Number(s.dataset.v);
-  renderStars();
-});
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str || '';
-  return div.innerHTML;
-}
-function fmtDate(iso) {
-  const d = new Date(iso + 'T00:00:00');
-  return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' });
-}
-function staticMapUrl(lat, lng) {
-  return `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=15&size=560x220&maptype=mapnik&markers=${lat},${lng},lightblue1`;
-}
-
-/* ---- Location picker map (no API key needed, OpenStreetMap) ---- */
-function initPickMap() {
-  if (typeof L === 'undefined' || !document.getElementById('pickMap')) return;
-  pickMap = L.map('pickMap').setView([36.5, 127.8], 7);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-    maxZoom: 19
-  }).addTo(pickMap);
-  pickMap.on('click', ev => setPickedLocation(ev.latlng.lat, ev.latlng.lng));
-  setTimeout(() => pickMap.invalidateSize(), 200);
-}
-function setPickedLocation(lat, lng) {
-  pickedLat = lat; pickedLng = lng;
-  if (pickMarker) { pickMarker.setLatLng([lat, lng]); }
-  else { pickMarker = L.marker([lat, lng]).addTo(pickMap); }
-  el('pickCoordLabel').textContent = `선택됨: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-}
-function clearPickedLocation() {
-  pickedLat = null; pickedLng = null;
-  if (pickMarker) { pickMap.removeLayer(pickMarker); pickMarker = null; }
-  el('pickCoordLabel').textContent = '지도를 클릭해서 대충 위치를 찍어보세요';
-}
-el('clearPinBtn').addEventListener('click', clearPickedLocation);
-
-function renderStats() {
-  const n = entries.length;
-  el('statTrips').textContent = n ? n + '회' : '–';
-  const totalFish = entries.reduce((s,e)=>s+(Number(e.count)||0),0);
-  el('statFish').textContent = n ? totalFish.toLocaleString() : '–';
-  const avgRating = n ? (entries.reduce((s,e)=>s+(Number(e.rating)||0),0)/n).toFixed(1) : '–';
-  el('statRating').textContent = avgRating;
-  const counts = {};
-  entries.forEach(e => (e.species||[]).forEach(s => counts[s]=(counts[s]||0)+1));
-  let top = '–', max = 0;
-  Object.entries(counts).forEach(([s,ct]) => { if (ct>max) { max=ct; top=s; } });
-  el('statSpecies').textContent = top !== '–' ? `${top} (${max})` : '–';
-}
-
-function renderCatTabs() {
-  const regionCounts = {};
-  entries.forEach(e => { if (e.region) regionCounts[e.region] = (regionCounts[e.region]||0)+1; });
-  const topRegions = Object.entries(regionCounts).sort((a,b)=>b[1]-a[1]).slice(0,6).map(x=>x[0]);
-  const tabs = ['ALL', ...topRegions];
-  el('catTabs').innerHTML = tabs.map(t => {
-    const label = t === 'ALL' ? '전체' : t;
-    const count = t === 'ALL' ? entries.length : regionCounts[t];
-    return `<div class="cat-tab ${activeCategory===t?'active':''}" data-cat="${t}">${escapeHtml(label)}<span class="count">${count}</span></div>`;
-  }).join('');
-}
-
-function getFiltered() {
-  const q = el('searchInput').value.trim().toLowerCase();
-  const sort = el('sortBy').value;
-  let list = entries.filter(e => {
-    const matchQ = !q || [e.region,e.spot,e.bait,e.catchDetail,e.note,...(e.species||[])].some(v => v && v.toLowerCase().includes(q));
-    const matchCat = activeCategory === 'ALL' || e.region === activeCategory;
-    return matchQ && matchCat;
-  });
-  list.sort((a,b) => {
-    if (sort === 'oldest') return a.date.localeCompare(b.date) || (a.createdAt||0)-(b.createdAt||0);
-    if (sort === 'highest') return (b.rating||0)-(a.rating||0) || b.date.localeCompare(a.date);
-    return b.date.localeCompare(a.date) || (b.createdAt||0)-(a.createdAt||0);
-  });
-  return list;
-}
-
-function renderEntries() {
-  renderStats();
-  renderCatTabs();
-  const list = getFiltered();
-  if (entries.length === 0) {
-    entriesArea.innerHTML = `<div class="empty-state"><p>아직 기록된 출조가 없어요.</p><p>오늘 낚시 다녀온 기록을 위에서 남겨보세요.</p></div>`;
-    return;
-  }
-  if (list.length === 0) {
-    entriesArea.innerHTML = `<div class="empty-state"><p>검색/필터 조건에 맞는 기록이 없어요.</p></div>`;
-    return;
-  }
-  entriesArea.innerHTML = '<div class="entries-head">기록 (' + list.length + ')</div>' +
-    list.map(e => {
-      const stars = '★'.repeat(e.rating||0) + '☆'.repeat(5-(e.rating||0));
-      const isOpen = expandedIds.has(e.id);
-      const title = e.spot ? escapeHtml(e.spot) : (e.region ? escapeHtml(e.region) : '(위치 미기재)');
-      const speciesHtml = (e.species&&e.species.length) ? `<div class="entry-species">${e.species.map(s=>`<span>${escapeHtml(s)}</span>`).join('')}</div>` : '';
-      return `
-      <div class="entry ${isOpen?'open':''}" data-id="${e.id}">
-        <div class="entry-top" data-action="toggle" data-id="${e.id}">
-          <div>
-            <div class="entry-title-row">
-              <span class="entry-chevron">▸</span>
-              <span class="entry-date">${fmtDate(e.date)}</span>
-              ${e.region ? `<span class="entry-loc">${escapeHtml(e.region)}</span>` : ''}
-              ${e.weather ? `<span>${e.weather}</span>` : ''}
-            </div>
-            <div class="entry-theme">${title}</div>
-          </div>
-          <div class="entry-side">
-            <div class="entry-stars">${stars}</div>
-            <div class="entry-meta2">${e.count ? e.count+'마리' : ''}</div>
-          </div>
-        </div>
-        <div class="entry-details">
-          <div class="entry-infobar">
-            ${e.tide ? `<span>물때 <b>${escapeHtml(e.tide)}</b></span>` : ''}
-            ${e.bait ? `<span>미끼/채비 <b>${escapeHtml(e.bait)}</b></span>` : ''}
-          </div>
-          ${speciesHtml}
-          ${(e.lat && e.lng) ? `
-          <div class="entry-map"><img src="${staticMapUrl(e.lat,e.lng)}" alt="위치 지도" loading="lazy"></div>
-          <div class="entry-map-links">
-            <a href="https://map.naver.com/v5/search/${e.lat},${e.lng}" target="_blank" rel="noopener">네이버 지도에서 보기</a>
-            <span>·</span>
-            <a href="https://www.google.com/maps?q=${e.lat},${e.lng}" target="_blank" rel="noopener">구글 지도에서 보기</a>
-          </div>` : ''}
-          ${e.catchDetail ? `<div class="note-block note-catch"><span class="note-tag">조과 상세</span>${escapeHtml(e.catchDetail)}</div>` : ''}
-          ${e.note ? `<div class="note-block note-note"><span class="note-tag">메모 / 참고사항</span>${escapeHtml(e.note)}</div>` : ''}
-          <div class="entry-actions">
-            <button data-action="share" data-id="${e.id}">텍스트 복사</button>
-            <button data-action="edit" data-id="${e.id}">수정</button>
-            <button data-action="delete" data-id="${e.id}">삭제</button>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-}
-
-async function loadEntries() {
-  try {
-    const result = await window.storage.list('fishing-entry:', false);
-    if (!result || !result.keys || result.keys.length === 0) {
-      entries = [];
-      renderEntries();
-      return;
-    }
-    const loaded = [];
-    for (const key of result.keys) {
-      try {
-        const r = await window.storage.get(key, false);
-        if (r && r.value) loaded.push(JSON.parse(r.value));
-      } catch (err) {}
-    }
-    entries = loaded;
-    renderEntries();
-  } catch (err) {
-    console.error(err);
-    entriesArea.innerHTML = '<div class="loading">불러오지 못했어요. 새로고침 해보세요.</div>';
-  }
-}
-
-async function saveEntry() {
-  const date = dateEl.value || todayStr();
-  const tide = tideEl.value.trim();
-  const region = regionEl.value.trim();
-  const spot = spotEl.value.trim();
-  const bait = baitEl.value.trim();
-  const count = countEl.value ? Number(countEl.value) : 0;
-  const catchDetail = catchDetailEl.value.trim();
-  const note = noteEl.value.trim();
-
-  if (!region && !spot && !catchDetail && !note) {
-    showToast('장소나 조과 내용을 최소 하나는 입력해주세요.');
-    return;
-  }
-
-  const id = editingId || ('f' + Date.now() + Math.random().toString(36).slice(2,7));
-  const entry = {
-    id, date, tide, region, spot, weather: selectedWeather, bait, count,
-    species: [...selectedSpecies], rating, catchDetail, note,
-    lat: pickedLat, lng: pickedLng,
-    createdAt: editingId ? (entries.find(e=>e.id===editingId)?.createdAt || Date.now()) : Date.now()
-  };
-
-  submitBtn.disabled = true;
-  submitBtn.textContent = '저장 중…';
-  try {
-    const res = await window.storage.set('fishing-entry:' + id, JSON.stringify(entry), false);
-    if (!res) throw new Error('save failed');
-    if (editingId) {
-      entries = entries.map(e => e.id === editingId ? entry : e);
-      showToast('출조 기록이 수정되었습니다.');
-    } else {
-      entries.push(entry);
-      showToast('출조 기록이 저장되었습니다.');
-    }
-    resetForm();
-    renderEntries();
-  } catch (err) {
-    console.error(err);
-    showToast('저장에 실패했어요. 다시 시도해주세요.');
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = editingId ? '수정 완료하기' : '출조 기록 저장하기';
-  }
-}
-
-function resetForm() {
-  editingId = null;
-  dateEl.value = todayStr();
-  tideEl.value = '';
-  regionEl.value = '';
-  spotEl.value = '';
-  baitEl.value = '';
-  countEl.value = '';
-  catchDetailEl.value = '';
-  noteEl.value = '';
-  selectedSpecies = [];
-  selectedWeather = null;
-  rating = 3;
-  renderSpeciesChips();
-  [...weatherRow.children].forEach(c => c.classList.remove('selected'));
-  renderStars();
-  clearPickedLocation();
-  if (pickMap) pickMap.setView([36.5, 127.8], 7);
-  formTitle.textContent = '출조 기록 작성';
-  submitBtn.textContent = '출조 기록 저장하기';
-  cancelEditBtn.classList.remove('show');
-}
-
-function editEntry(id) {
-  const e = entries.find(x => x.id === id);
-  if (!e) return;
-  editingId = id;
-  dateEl.value = e.date;
-  tideEl.value = e.tide || '';
-  regionEl.value = e.region || '';
-  spotEl.value = e.spot || '';
-  baitEl.value = e.bait || '';
-  countEl.value = e.count || '';
-  catchDetailEl.value = e.catchDetail || '';
-  noteEl.value = e.note || '';
-  selectedSpecies = e.species ? [...e.species] : [];
-  selectedWeather = e.weather || null;
-  rating = e.rating || 3;
-  renderSpeciesChips();
-  [...weatherRow.children].forEach(c => c.classList.toggle('selected', c.dataset.w === selectedWeather));
-  renderStars();
-  if (e.lat && e.lng) {
-    setPickedLocation(e.lat, e.lng);
-    if (pickMap) pickMap.setView([e.lat, e.lng], 13);
-  } else {
-    clearPickedLocation();
-  }
-  formTitle.textContent = '출조 기록 수정';
-  submitBtn.textContent = '수정 완료하기';
-  cancelEditBtn.classList.add('show');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-async function deleteEntry(id) {
-  if (!confirm('이 출조 기록을 삭제할까요?')) return;
-  try {
-    await window.storage.delete('fishing-entry:' + id, false);
-    entries = entries.filter(e => e.id !== id);
-    expandedIds.delete(id);
-    renderEntries();
-    showToast('삭제되었습니다.');
-  } catch (err) {
-    console.error(err);
-    showToast('삭제에 실패했어요.');
-  }
-}
-
-function shareEntry(id) {
-  const e = entries.find(x => x.id === id);
-  if (!e) return;
-  let text = `🎣 [낚시 일지] ${e.date}\n`;
-  if (e.region || e.spot) text += `장소: ${[e.region,e.spot].filter(Boolean).join(' / ')}\n`;
-  if (e.tide) text += `물때: ${e.tide}\n`;
-  if (e.weather) text += `날씨: ${e.weather}\n`;
-  if (e.bait) text += `미끼/채비: ${e.bait}\n`;
-  text += `마리수: ${e.count||0}\n`;
-  if (e.species && e.species.length) text += `어종: ${e.species.join(', ')}\n`;
-  text += `만족도: ${'★'.repeat(e.rating||0)}${'☆'.repeat(5-(e.rating||0))} (${e.rating||0}/5)\n\n`;
-  if (e.catchDetail) text += `[조과 상세]\n${e.catchDetail}\n\n`;
-  if (e.note) text += `[메모]\n${e.note}\n`;
-  el('modalText').value = text;
-  el('modalOverlay').classList.add('show');
-}
-
-entriesArea.addEventListener('click', e => {
-  const btn = e.target.closest('button[data-action]');
-  if (btn) {
-    const id = btn.dataset.id;
-    if (btn.dataset.action === 'delete') deleteEntry(id);
-    if (btn.dataset.action === 'edit') editEntry(id);
-    if (btn.dataset.action === 'share') shareEntry(id);
-    return;
-  }
-  const toggle = e.target.closest('[data-action="toggle"]');
-  if (toggle) {
-    const id = toggle.dataset.id;
-    if (expandedIds.has(id)) expandedIds.delete(id); else expandedIds.add(id);
-    renderEntries();
-  }
-});
-
-el('catTabs').addEventListener('click', e => {
-  const tab = e.target.closest('.cat-tab');
-  if (!tab) return;
-  activeCategory = tab.dataset.cat;
-  renderEntries();
-});
-
-el('modalClose').addEventListener('click', () => el('modalOverlay').classList.remove('show'));
-el('modalOverlay').addEventListener('click', e => { if (e.target.id === 'modalOverlay') el('modalOverlay').classList.remove('show'); });
-el('modalCopy').addEventListener('click', () => {
-  const ta = el('modalText');
-  ta.select();
-  try { document.execCommand('copy'); showToast('클립보드에 복사했어요.'); }
-  catch (err) { showToast('복사에 실패했어요. 직접 선택해서 복사해주세요.'); }
-});
-
-submitBtn.addEventListener('click', saveEntry);
-cancelEditBtn.addEventListener('click', resetForm);
-el('searchInput').addEventListener('input', renderEntries);
-el('sortBy').addEventListener('change', renderEntries);
-
-el('exportBtn').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `fishing_journal_backup_${todayStr()}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-  showToast('백업 파일을 다운로드했어요.');
-});
-
-el('importBtn').addEventListener('click', () => el('importFile').click());
-el('importFile').addEventListener('change', async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    try {
-      const imported = JSON.parse(e.target.result);
-      if (!Array.isArray(imported)) { showToast('올바른 백업 파일이 아니에요.'); return; }
-      if (!confirm(`${imported.length}개의 기록을 불러와 저장할까요?`)) return;
-      for (const item of imported) {
-        if (!item.id) item.id = 'f' + Date.now() + Math.random().toString(36).slice(2,7);
-        await window.storage.set('fishing-entry:' + item.id, JSON.stringify(item), false);
-      }
-      await loadEntries();
-      showToast('불러오기를 완료했어요.');
-    } catch (err) {
-      console.error(err);
-      showToast('파일을 읽는 중 오류가 발생했어요.');
-    }
-  };
-  reader.readAsText(file);
-  event.target.value = '';
-});
-
-function showToast(msg) {
-  const t = el('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
-loadEntries();
-initPickMap();
-</script>
-</body>
-</html>
+var MISS=["뒷땅","탑볼","슬라이스","훅"],SIDES=["왼쪽 끝","중앙","오른쪽 끝"],TYPES=["티샷","세컨드","어프로치","쇼트게임"];
+var WARM=["스트레칭: 어깨, 허리, 손목, 고관절을 먼저 풀기","웨지로 시작: 30~40m 짧은 스윙 10개","웨지 스윙 크기를 풀스윙까지 점차 키우기","클럽 순서: 짝수 클럽 위주로 번갈아 (드라이버부터 잡지 않기)","프리샷 루틴 5단계를 눈으로 한 번 훑기"];
+var ROUT=["타깃 설정","페이스 정렬","호흡·이미지","빈 스윙","멈춤 없이 샷"];
+var ROD=["공 뒤로 걸어가 구체적 목표물(나무, 벙커 끝, 표지판)을 정합니다.","몸보다 클럽 페이스를 먼저 목표 방향에 맞춥니다.","1~2초 심호흡하며 탄도와 구질을 머릿속에 그립니다.","1~2회, 리듬과 템포만 확인합니다.","어드레스 후 멈추지 않고 템포대로 칩니다."];
+var TIPS=["스크린 매트는 항상 정면이라 에이밍 감각이 무뎌집니다. 샷마다 타깃을 바꾸세요.","공이 굴러와도 바로 치지 마세요. 한 걸음 물러나 루틴을 처음부터 다시 하세요.","같은 클럽을 연속으로 잡지 마세요. 필드에서는 한 홀에 클럽이 계속 바뀝니다.","화면 수치만 보지 말고 센서 값(클럽 패스, 페이스 앵글)을 확인하세요.","어프로치는 화면 거리에 맞춘 툭 치는 스윙이 아니라, 필드에서 보낸 백스윙 크기로 치세요.","실제 잔디(파3 코스 등)에서 한 번 쳐보면 뒷땅 감각이 확 달라집니다."];
+var TEEC=["맞바람: 낮고 짧게 컨트롤하세요.","페어웨이가 좁습니다. 중앙만 보세요.","평지 티샷: 템포 80%로 정확히."];
+var LIE=["평지 라이","내리막 라이: 어깨를 경사에 맞추세요.","오르막 라이: 경사를 따라 치세요.","러프: 공 뒤 수건을 건드리지 않게 치세요.","맞바람: 한 클럽 길게, 낮게."];
+var SG="화면 거리 숫자가 아니라, 필드에서 이 거리를 보낼 때의 백스윙 크기와 낙하 지점을 먼저 상상하고 치세요.";
+var RX={"뒷땅":"공 뒤 수건 드릴로 공 앞 바닥을 치세요. 센서의 체중 이동 그래프에서 체중이 뒤에 남지 않는지 확인하세요.","탑볼":"임팩트까지 가슴 높이를 유지하세요. 체중 이동 그래프로 체중이 뒤에 남는지도 확인하세요.","슬라이스":"센서의 클럽 패스(Out-to-In 여부)와 페이스 앵글을 확인하고, 안에서 밖으로 지나가는 궤도를 천천히 연습하세요.","훅":"센서의 클럽 패스(In-to-Out 과다)와 페이스 앵글을 확인하고, 손보다 몸통 회전으로 치세요."};
+var tab="today",run=null,done=null,PT=["5","10","15"];
+function ld(){try{var s=JSON.parse(localStorage.getItem("gft"));if(s&&s.sessions){s.putt=s.putt||{};return s}}catch(e){}return{sessions:[],checks:{},notes:{},putt:{}}}
+var S=ld();
+function sv(){try{localStorage.setItem("gft",JSON.stringify(S))}catch(e){}if(DB){clearTimeout(tmr);tmr=setTimeout(function(){DB.doc(base()+"/train").set(S).catch(function(){CLOUD=false})},700)}}
+function dk(d){d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function pick(a){return a[Math.random()*a.length|0]}
+function ri(a,b){return a+(Math.random()*(b-a+1)|0)}
+function pct(a,b){return b?Math.round(a/b*100):0}
+function active(k){var c=S.checks[k];return S.sessions.some(function(s){return s.date==k})||(c&&c.some(Boolean))}
+function streak(){var d=new Date(),n=0;if(!active(dk(d)))d.setDate(d.getDate()-1);while(active(dk(d))){n++;d.setDate(d.getDate()-1)}return n}
+function cf(d){return d>=180?"5번 아이언":d>=160?"6번 아이언":d>=145?"7번 아이언":d>=130?"8번 아이언":d>=115?"9번 아이언":d>=90?"피칭웨지":d>=60?"52도 웨지":"56도 웨지"}
+function plan(){var P=[4,3,5,4,4,3,5,4,4],o=[],last="";
+ function add(h,p,ty,club,dist,L,cue){var a;do{a=pick(SIDES)}while(a==last);last=a;var ob=ty!="쇼트게임"&&Math.random()<.25;
+  o.push({h:h,par:p,len:L,ty:ty,club:club,dist:dist,aim:a,ob:ob?pick(["왼쪽","오른쪽"]):"",cue:cue})}
+ P.forEach(function(p,i){var h=i+1,L=p==3?5*ri(28,38):p==4?5*ri(64,80):5*ri(96,106);
+  if(p==3){add(h,p,"티샷",cf(L),L,L,pick(TEEC));add(h,p,"쇼트게임",pick(["피칭웨지","56도 웨지"]),ri(8,25),L,SG)}
+  else{var d=5*ri(37,46),rem=L-d;add(h,p,"티샷",pick(["드라이버","드라이버","3번 우드"]),d,L,pick(TEEC));
+   if(p==5){var d2=5*ri(30,36);add(h,p,"세컨드",pick(["3번 우드","5번 아이언"]),d2,L,pick(LIE));rem-=d2}
+   rem=Math.max(70,Math.min(rem,190));add(h,p,"어프로치",cf(rem),rem,L,pick(LIE));
+   if(i%3==0)add(h,p,"쇼트게임",pick(["피칭웨지","56도 웨지"]),ri(8,25),L,SG)}});return o}
+function wl(){var k=dk(),c=S.checks[k]||[0,0,0,0,0];return WARM.map(function(t,i){return '<div class="chk '+(c[i]?"on":"")+'" data-a="chk" data-v="'+i+'"><span class="box">'+(c[i]?"✓":"")+'</span><span>'+t+'</span></div>'}).join("")}
+function vToday(){var k=dk(),n=streak(),w=["일","월","화","수","목","금","토"],h="";
+ for(var i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);h+='<div class="dot '+(active(dk(d))?"on ":"")+(i==0?"t":"")+'"><i></i><b>'+w[d.getDay()]+'</b></div>'}
+ var pt=PT.map(function(m){return '<div class="row" style="margin-bottom:6px"><span style="width:38px">'+m+'m</span><input class="pt" data-p="'+m+'" placeholder="예: 오른발 엄지까지" value="'+esc(S.putt[m]||"")+'"></div>'}).join("");
+ return '<h1>필드 트레이너</h1><div class="card"><div class="row sp"><div><div class="mu">연속 연습</div><div class="big">'+n+'일</div></div><div class="mu" style="text-align:right">총 '+S.sessions.length+'회 세션</div></div><div class="dots" style="margin-top:12px">'+h+'</div></div>'
+ +'<div class="card"><h2>오늘의 한 가지</h2><div>'+TIPS[new Date().getDate()%TIPS.length]+'</div></div>'
+ +'<div class="card"><h2>연습 흐름</h2><div class="mu">1 몸풀기 → 2 프리샷 루틴 5단계 → 3 가상 9홀(거리, 클럽, 타깃, OB 랜덤) → 4 쇼트게임과 퍼팅 거리감, 센서 피드백</div></div>'
+ +'<div class="card"><h2>1단계 몸풀기</h2>'+wl()+'</div>'
+ +'<button class="pri" data-a="start">필드 연습 시작</button>'
+ +'<div class="card" style="margin-top:12px"><h2>내 퍼팅 스트로크 공식</h2><div class="mu" style="margin-bottom:8px">거리별 백스윙 크기를 적어두고 샷마다 맞춰보세요.</div>'+pt+'</div>'
+ +'<div class="card"><h2>오늘 한 줄 메모</h2><textarea id="note" placeholder="오늘 느낀 점, 내일 고칠 것">'+esc(S.notes[k]||"")+'</textarea></div>'}
+function vRun(){
+ if(done)return vDone();
+ if(!run)return '<h1>필드 연습</h1><div class="card"><p>몸풀기를 마치고 가상 9홀을 돕니다. 홀마다 티샷, 어프로치, 쇼트게임이 거리와 함께 주어지고, 프리샷 루틴 5단계를 지킨 뒤 결과를 기록합니다.</p><p class="mu">약 23샷, 30~40분.</p></div><button class="pri" data-a="start">시작하기</button>';
+ if(run.ph=="warm"){var rl=ROUT.map(function(t,i){return '<div class="li"><span><b>'+(i+1)+'. '+t+'</b></span></div><div class="mu" style="margin:-4px 0 6px">'+ROD[i]+'</div>'}).join("");
+  return '<h1>몸풀기와 루틴</h1><div class="card"><h2>1단계 몸풀기</h2>'+wl()+'</div><div class="card"><h2>2단계 프리샷 루틴</h2>'+rl+'</div><button class="pri" data-a="go">가상 9홀 시작</button>'}
+ var s=run.plan[run.i],ch=ROUT.map(function(t,i){return '<button class="chip '+(run.ch[i]?"on":"")+'" data-a="chip" data-v="'+i+'">'+(run.ch[i]?"✓ ":"")+(i+1)+" "+t+'</button>'}).join("");
+ var rb=MISS.map(function(m){return '<button class="rb" data-a="res" data-v="'+m+'">'+m+'</button>'}).join("");
+ var info=s.ty=="티샷"?"홀 길이 "+s.len+"m":(s.ty=="쇼트게임"?"그린까지 "+s.dist+"m":"남은 거리 "+s.dist+"m");
+ return '<div class="row sp mu"><span>'+s.h+'번 홀 · 파'+s.par+' · '+s.len+'m</span><span>'+(run.i+1)+' / '+run.plan.length+'</span></div><div class="prog"><i style="width:'+pct(run.i,run.plan.length)+'%"></i></div>'
+ +'<div class="card"><div class="mu">'+s.ty+'</div><div class="big">'+s.club+'</div><div class="mu" style="margin-top:2px">'+info+'</div>'
+ +'<div class="cue"><b>타깃</b> '+s.aim+'. 화면 속 나무나 벙커 끝 같은 지형지물을 하나 정하세요.</div>'
+ +(s.ob?'<div class="cue ob">⚠ '+s.ob+'쪽 OB. 미스는 벌타 1</div>':'')+'<div class="cue">'+s.cue+'</div></div>'
+ +'<div class="mu">프리샷 루틴 (공 뒤에서 시작)</div><div class="chips">'+ch+'</div><div class="mu" style="margin-bottom:8px">임팩트 기준으로 결과를 고르세요</div><div class="grid"><button class="rb g" data-a="res" data-v="굿">좋은 샷</button>'+rb+'</div>'
+ +'<div class="row" style="margin-top:12px"><button data-a="undo">되돌리기</button><button data-a="quit">그만하기</button></div>'}
+function sum(sh){var m={},g=0,r=0,pen=0,ty={};MISS.forEach(function(x){m[x]=0});TYPES.forEach(function(t){ty[t]=[0,0]});
+ sh.forEach(function(x){var ok=x.r=="굿";if(ok)g++;else{m[x.r]++;if(x.ob)pen++}if(x.rt)r++;ty[x.ty][1]++;if(ok)ty[x.ty][0]++});return{g:g,n:sh.length,r:r,m:m,pen:pen,ty:ty}}
+function tyb(ty){return TYPES.filter(function(t){return ty[t]&&ty[t][1]}).map(function(t){var v=ty[t];return '<div class="row sp"><span>'+t+'</span><span class="mu">'+v[0]+'/'+v[1]+' · '+pct(v[0],v[1])+'%</span></div><div class="bar"><i style="width:'+pct(v[0],v[1])+'%"></i></div>'}).join("")}
+function bars(m,n){return MISS.map(function(x){return '<div class="row sp"><span>'+x+'</span><span class="mu">'+m[x]+'회 · '+pct(m[x],n)+'%</span></div><div class="bar m"><i style="width:'+pct(m[x],n)+'%"></i></div>'}).join("")}
+function vDone(){var a=sum(done.sh),top=null,mx=0;MISS.forEach(function(x){if(a.m[x]>mx){mx=a.m[x];top=x}});
+ return '<h1>오늘 라운드 결과</h1><div class="card"><div class="row sp"><div><div class="mu">좋은 샷</div><div class="big">'+a.g+'/'+a.n+'</div></div><div style="text-align:center"><div class="mu">루틴 완주</div><div class="big">'+pct(a.r,a.n)+'%</div></div><div style="text-align:right"><div class="mu">OB 벌타</div><div class="big">'+a.pen+'</div></div></div></div>'
+ +'<div class="card"><h2>샷 종류별 좋은 샷</h2>'+tyb(a.ty)+'</div><div class="card"><h2>미스 분포</h2>'+bars(a.m,a.n)+'</div>'
+ +(top?'<div class="card"><h2>다음 연습 처방: '+top+'</h2><div>'+RX[top]+'</div></div>':'<div class="card">미스 없이 마쳤습니다. 다음에는 OB 구역을 더 넓게 잡아보세요.</div>')
+ +'<button class="pri" data-a="again">한 번 더</button>'}
+function vLog(){var tot={n:0,g:0,r:0,pen:0,m:{},ty:{}};MISS.forEach(function(x){tot.m[x]=0});TYPES.forEach(function(t){tot.ty[t]=[0,0]});
+ S.sessions.forEach(function(s){tot.n+=s.n;tot.g+=s.g;tot.r+=s.r;tot.pen+=s.pen||0;MISS.forEach(function(x){tot.m[x]+=s.m[x]||0});if(s.ty)TYPES.forEach(function(t){if(s.ty[t]){tot.ty[t][0]+=s.ty[t][0];tot.ty[t][1]+=s.ty[t][1]}})});
+ var ls=S.sessions.slice(-10).reverse().map(function(s){return '<div class="li"><span>'+s.date+'</span><span class="mu">좋은 샷 '+pct(s.g,s.n)+'% · 루틴 '+pct(s.r,s.n)+'%</span></div>'}).join("")||'<div class="mu">아직 기록이 없습니다.</div>';
+ return '<h1>기록</h1><div class="card"><div class="row sp"><div><div class="mu">누적 좋은 샷</div><div class="big">'+pct(tot.g,tot.n)+'%</div></div><div style="text-align:right"><div class="mu">누적 샷</div><div class="big">'+tot.n+'</div></div></div></div>'
+ +'<div class="card"><h2>샷 종류별 좋은 샷</h2>'+(tot.n?tyb(tot.ty):'<div class="mu">데이터가 쌓이면 표시됩니다.</div>')+'</div>'
+ +'<div class="card"><h2>누적 미스 유형</h2>'+(tot.n?bars(tot.m,tot.n):'<div class="mu">데이터가 쌓이면 표시됩니다.</div>')+'</div><div class="card"><h2>최근 세션</h2>'+ls+'</div>'+stbar()+'<button data-a="backup" style="width:100%">백업 파일 저장</button><button data-a="restore" style="width:100%;margin-top:8px">백업에서 복원</button><input type="file" id="rf" accept=".json" hidden>'}
+function render(){var v=tab=="today"?vToday():tab=="run"?vRun():tab=="screen"?vScreen():vLog();document.getElementById("app").innerHTML=v;
+ document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b.dataset.v==tab)})}
+function finish(){var a=sum(run.sh);S.sessions.push({date:dk(),n:a.n,g:a.g,r:a.r,m:a.m,pen:a.pen,ty:a.ty});sv();done={sh:run.sh};run=null}
+document.addEventListener("click",function(e){var b=e.target.closest("[data-a]");if(!b)return;var a=b.dataset.a,v=b.dataset.v;
+ if(a=="tab"){tab=v;if(v!="run")done=null}
+ else if(a=="chk"){var k=dk(),c=S.checks[k]||[0,0,0,0,0];c[+v]=c[+v]?0:1;S.checks[k]=c;sv()}
+ else if(a=="start"){run={ph:"warm"};done=null;tab="run";window.scrollTo(0,0)}
+ else if(a=="go"||a=="again"){run={ph:"play",plan:plan(),i:0,ch:[0,0,0,0,0],sh:[]};done=null;tab="run";window.scrollTo(0,0)}
+ else if(a=="chip"){run.ch[+v]=run.ch[+v]?0:1}
+ else if(a=="res"){var s=run.plan[run.i];run.sh.push({r:v,rt:run.ch.every(Boolean),ty:s.ty,ob:!!s.ob});run.ch=[0,0,0,0,0];run.i++;if(run.i>=run.plan.length)finish()}
+ else if(a=="undo"){if(run.ph=="play"&&run.i>0){run.sh.pop();run.i--;run.ch=[0,0,0,0,0]}}
+ else if(a=="quit"){if(run.ph=="play"&&run.sh.length>=3)finish();else run=null}
+ else if(a=="save_round"){if(!F.holes.some(function(x){return x.score!==""})){alert("타수를 하나 이상 입력하세요.");return}
+  var r=JSON.parse(JSON.stringify(F));if(!r.id)r.id="round_"+Date.now();var i=R.findIndex(function(x){return x.id==r.id});if(i<0)R.push(r);else R[i]=r;saveR(r);F=newF(r.cc)}
+ else if(a=="edit"){var f=R.find(function(x){return x.id==v});if(f){F=JSON.parse(JSON.stringify(f));window.scrollTo(0,0)}}
+ else if(a=="newr"){F=newF(F.cc)}
+ else if(a=="backup"){var nm="golf_backup_"+dk()+".json",tx=JSON.stringify({train:S,rounds:R},null,1);
+  (window.claude&&claude.use?claude.use("downloads"):Promise.resolve(null)).then(function(d){if(d)return d.save({filename:nm,data:tx});var a2=document.createElement("a");a2.href=URL.createObjectURL(new Blob([tx],{type:"application/json"}));a2.download=nm;document.body.appendChild(a2);a2.click();setTimeout(function(){a2.remove()},500)}).catch(function(){})}
+ else if(a=="restore"){document.getElementById("rf").click();return}
+ render()});
+document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.h!==undefined){var n=parseInt(t.value);F.holes[+t.dataset.h][t.dataset.k]=isNaN(n)?"":n;document.getElementById("tot").textContent=tt(rt(F))}else if(t.dataset&&t.dataset.f){F[t.dataset.f]=t.value}else if(t.id=="note"){S.notes[dk()]=t.value;sv()}else if(t.dataset&&t.dataset.p){S.putt[t.dataset.p]=t.value;sv()}});
+var R=[],F=null,UID=null,DB=null,CLOUD=false,tmr=null,SYS=["골프존","카카오VX","SG골프","기타"];
+try{R=JSON.parse(localStorage.getItem("gft_r"))||[]}catch(e){R=[]}
+function newF(cc){var h=[];for(var i=0;i<9;i++)h.push({par:4,dist:"",score:"",putt:"",pen:""});return{id:"",date:dk(),cc:cc||"",sys:"골프존",holes:h,memo:""}}
+F=newF();
+function base(){return "data/users/"+UID}
+function rt(r){var s=0,p=0,pt=0,pn=0,n=0,dm=0;r.holes.forEach(function(h){dm+=parseInt(h.dist)||0;var sc=parseInt(h.score);if(!isNaN(sc)){s+=sc;p+=(+h.par||0);n++}pt+=parseInt(h.putt)||0;pn+=parseInt(h.pen)||0});return{s:s,d:s-p,pt:pt,pn:pn,n:n,dm:dm}}
+function sg(d){return(d>0?"+":"")+d}
+function tt(t){return (t.dm?"총 "+t.dm+"m · ":"")+"합계 "+t.s+"타 ("+sg(t.d)+") · 퍼트 "+t.pt+" · 벌타 "+t.pn}
+function saveR(r){try{localStorage.setItem("gft_r",JSON.stringify(R))}catch(e){}
+ if(DB)DB.doc(base()+"/"+r.id).set(r).catch(function(){CLOUD=false;render()})}
+function stat(){var ok=R.map(rt).filter(function(t){return t.n==9});if(!ok.length)return"";
+ var avg=ok.reduce(function(a,t){return a+t.s},0)/ok.length,best=Math.min.apply(null,ok.map(function(t){return t.s})),m={};
+ R.forEach(function(r){var t=rt(r);if(t.n==9&&r.cc){m[r.cc]=m[r.cc]||[0,0];m[r.cc][0]+=t.s;m[r.cc][1]++}});
+ var cc=Object.keys(m).map(function(k){return '<div class="li"><span>'+esc(k)+'</span><span class="mu">평균 '+(m[k][0]/m[k][1]).toFixed(1)+' · '+m[k][1]+'회</span></div>'}).join("");
+ return '<div class="card"><div class="row sp"><div><div class="mu">평균 (9홀)</div><div class="big">'+avg.toFixed(1)+'</div></div><div style="text-align:center"><div class="mu">베스트</div><div class="big">'+best+'</div></div><div style="text-align:right"><div class="mu">라운드</div><div class="big">'+R.length+'</div></div></div></div><div class="card"><h2>CC별 평균</h2>'+cc+'</div>'}
+function stbar(){return CLOUD?'<div class="mu" style="margin-bottom:8px">☁ 계정에 저장 중입니다. 기기를 바꿔도 유지됩니다.</div>':'<div class="mu" style="margin-bottom:8px">⚠ 이 기기 브라우저에만 저장 중입니다. 기록 탭의 백업 파일을 주기적으로 저장해 두세요.</div>'}
+function vScreen(){
+ var rows=F.holes.map(function(h,i){return '<div class="hr"><span>'+(i+1)+'</span>'+'<select data-h="'+i+'" data-k="par">'+[3,4,5].map(function(p){return '<option'+(+h.par==p?" selected":"")+'>'+p+'</option>'}).join("")+'</select>'+[["dist","거리m"],["score","타수"],["putt","퍼트"],["pen","벌타"]].map(function(k){return '<input type="number" inputmode="numeric" data-h="'+i+'" data-k="'+k[0]+'" value="'+(h[k[0]]==null?"":h[k[0]])+'" placeholder="'+k[1]+'">'}).join("")+'</div>'}).join("");
+ var ccs=[];R.forEach(function(r){if(r.cc&&ccs.indexOf(r.cc)<0)ccs.push(r.cc)});
+ var dl=ccs.map(function(c){return '<option value="'+esc(c)+'">'}).join("");
+ var sel=SYS.map(function(s){return '<option'+(F.sys==s?" selected":"")+'>'+s+'</option>'}).join("");
+ var list=R.slice().sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:0}).map(function(r){var t=rt(r);return '<div class="li" data-a="edit" data-v="'+r.id+'" style="cursor:pointer"><span>'+r.date+' · '+esc(r.cc||"코스 미입력")+'</span><span class="mu">'+t.s+'타 ('+sg(t.d)+') · 퍼트 '+t.pt+'</span></div>'}).join("")||'<div class="mu">아직 저장된 라운드가 없습니다.</div>';
+ return '<h1>스크린 라운드</h1>'+stbar()+'<div class="card"><h2>'+(F.id?"라운드 수정":"9홀 기록")+'</h2>'
+ +'<input class="f" type="date" data-f="date" value="'+esc(F.date)+'"><input class="f" list="ccs" data-f="cc" placeholder="CC(코스)명" value="'+esc(F.cc)+'"><datalist id="ccs">'+dl+'</datalist>'
+ +'<select class="f" data-f="sys">'+sel+'</select>'
+ +'<div class="hr mu"><span>홀</span><span>파</span><span>거리</span><span>타수</span><span>퍼트</span><span>벌타</span></div>'+rows
+ +'<div id="tot" class="mu" style="margin:6px 0">'+tt(rt(F))+'</div><textarea data-f="memo" placeholder="복기 메모 (잘된 홀, 아쉬운 홀)">'+esc(F.memo)+'</textarea>'
+ +'<button class="pri" data-a="save_round" style="margin-top:10px">'+(F.id?"수정 저장":"라운드 저장")+'</button>'+(F.id?'<button data-a="newr" style="width:100%;margin-top:8px">새 라운드 쓰기</button>':'')+'</div>'
+ +stat()+'<div class="card"><h2>저장된 라운드</h2>'+list+'<div class="mu" style="margin-top:8px">누르면 수정할 수 있습니다. 삭제 기능은 없습니다.</div></div>'}
+async function initDB(){try{if(!window.claude||!claude.use)return;var u=await claude.use("user"),d=await claude.use("db");if(!u||!d)return;UID=await u.id();DB=d;
+ var ts=await DB.doc(base()+"/train").get();
+ if(ts.exists){var rd=ts.data();if(rd&&rd.sessions){rd.putt=rd.putt||{};rd.checks=rd.checks||{};rd.notes=rd.notes||{};S=rd;try{localStorage.setItem("gft",JSON.stringify(S))}catch(e){}}}else{await DB.doc(base()+"/train").set(S)}
+ var qs=await DB.collection(base()).get(),rem=[],ids={};
+ qs.docs.forEach(function(x){if(x.id.indexOf("round_")==0){var o=x.data();o.id=x.id;rem.push(o);ids[x.id]=1}});
+ R.forEach(function(r){if(!ids[r.id]){rem.push(r);DB.doc(base()+"/"+r.id).set(r)}});R=rem;
+ try{localStorage.setItem("gft_r",JSON.stringify(R))}catch(e){}
+ CLOUD=true;if(!(tab=="run"&&run&&run.ph=="play"))render()}catch(e){}}
+initDB();
+document.addEventListener("change",function(e){var t=e.target;
+ if(t.dataset&&t.dataset.f=="cc"&&!F.id&&!F.holes.some(function(x){return x.score!==""})){var p=R.filter(function(r){return r.cc==t.value}).sort(function(a,b){return a.date<b.date?1:-1})[0];if(p){F.holes=p.holes.map(function(x){return{par:x.par,dist:x.dist==null?"":x.dist,score:"",putt:"",pen:""}});render()}}
+ else if(t.id=="rf"&&t.files[0]){var fr=new FileReader();fr.onload=function(){try{var d=JSON.parse(fr.result);if(d.train&&d.train.sessions){S=d.train;S.putt=S.putt||{};S.checks=S.checks||{};S.notes=S.notes||{};sv()}
+  (d.rounds||[]).forEach(function(r){var i=R.findIndex(function(x){return x.id==r.id});if(i<0)R.push(r);else R[i]=r;saveR(r)});render()}catch(err){alert("백업 파일을 읽을 수 없습니다.")}};fr.readAsText(t.files[0])}});
+render();
+</script></body></html>
