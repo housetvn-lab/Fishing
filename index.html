@@ -462,7 +462,305 @@
         };
         let activeHoleIdx = 0;
 
-        // ... existing 3D simulation setup code ...
+        // 3D Engine Variables
+        let scene, camera, renderer;
+        let ball, pin, fairwayMesh, greenMesh, cupMesh;
+        let ballVel = new THREE.Vector3();
+        let isBallFlying = false;
+        let aimAngleDeg = 0;
+        let selectedImpact = 'center';
+
+        const simCourseHoles = [
+            { par: 4, dist: 360 },
+            { par: 4, dist: 380 },
+            { par: 3, dist: 150 },
+            { par: 5, dist: 480 },
+            { par: 4, dist: 340 },
+            { par: 3, dist: 130 },
+            { par: 4, dist: 400 },
+            { par: 5, dist: 510 },
+            { par: 4, dist: 370 }
+        ];
+
+        let simState = {
+            currentHoleIdx: 0,
+            shotCount: 0,
+            ballPos: new THREE.Vector3(0, 0, 0),
+            targetPos: new THREE.Vector3(0, 0, -360),
+            remainDist: 360,
+            scores: Array(9).fill(null),
+            windSpeed: 3.2,
+            windAngle: Math.PI / 4
+        };
+
+        const clubDistances = {
+            '1W': 230, '3W': 200, '5I': 160, '7I': 140, 'PW': 110, 'SW': 80, 'PT': 15
+        };
+
+        function init3DSimulation() {
+            const container = document.getElementById('canvas-container');
+            if (!container) return;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0f172a);
+            scene.fog = new THREE.FogExp2(0x0f172a, 0.0015);
+
+            camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1500);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.2);
+            sunLight.position.set(100, 200, 100);
+            sunLight.castShadow = true;
+            scene.add(sunLight);
+
+            // Ball
+            const ballGeo = new THREE.SphereGeometry(0.8, 16, 16);
+            const ballMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+            ball = new THREE.Mesh(ballGeo, ballMat);
+            ball.castShadow = true;
+            scene.add(ball);
+
+            // Pin / Flag
+            const pinGeo = new THREE.CylinderGeometry(0.15, 0.15, 8);
+            const pinMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0 });
+            pin = new THREE.Mesh(pinGeo, pinMat);
+            pin.position.y = 4;
+            
+            const flagGeo = new THREE.PlaneGeometry(3, 2);
+            const flagMat = new THREE.MeshBasicMaterial({ color: 0xef4444, side: THREE.DoubleSide });
+            const flag = new THREE.Mesh(flagGeo, flagMat);
+            flag.position.set(1.5, 3, 0);
+            pin.add(flag);
+            scene.add(pin);
+
+            // Ground / Fairway
+            const fwGeo = new THREE.PlaneGeometry(120, 1200);
+            const fwMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.8 });
+            fairwayMesh = new THREE.Mesh(fwGeo, fwMat);
+            fairwayMesh.rotation.x = -Math.PI / 2;
+            fairwayMesh.position.z = -500;
+            fairwayMesh.receiveShadow = true;
+            scene.add(fairwayMesh);
+
+            // Green
+            const greenGeo = new THREE.CylinderGeometry(25, 25, 0.2, 32);
+            const greenMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.4 });
+            greenMesh = new THREE.Mesh(greenGeo, greenMat);
+            greenMesh.position.y = -0.1;
+            scene.add(greenMesh);
+
+            window.addEventListener('resize', onWindowResize);
+            setupHole(0);
+            animateLoop();
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            if (!container || !renderer || !camera) return;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function setupHole(holeIdx) {
+            simState.currentHoleIdx = holeIdx;
+            simState.shotCount = 0;
+            const dist = simCourseHoles[holeIdx].dist;
+            
+            simState.ballPos.set(0, 0.8, 0);
+            simState.targetPos.set(0, 0, -dist);
+            simState.remainDist = dist;
+
+            ball.position.copy(simState.ballPos);
+            pin.position.set(simState.targetPos.x, 0, simState.targetPos.z);
+            greenMesh.position.set(simState.targetPos.x, -0.1, simState.targetPos.z);
+
+            aimAngleDeg = 0;
+            updateAimDisplay();
+            updateCameraAndHUD();
+            updateClubRecommendation();
+
+            document.getElementById('save-sim-to-game-records-btn').classList.add('hidden');
+        }
+
+        function updateAimDisplay() {
+            const label = document.getElementById('aim-angle-label');
+            if (!label) return;
+            if (aimAngleDeg === 0) label.innerText = "0° (직진)";
+            else if (aimAngleDeg < 0) label.innerText = `좌 ${Math.abs(aimAngleDeg)}°`;
+            else label.innerText = `우 ${aimAngleDeg}°`;
+        }
+
+        function adjustAim(delta) {
+            aimAngleDeg = Math.max(-20, Math.min(20, aimAngleDeg + delta));
+            updateAimDisplay();
+            updateCameraAndHUD();
+        }
+
+        function setImpact(type) {
+            selectedImpact = type;
+            document.getElementById('btn-imp-hook').className = type === 'hook' ? "flex-1 py-1.5 rounded-xl border border-amber-500 bg-amber-900/40 text-amber-300 text-xs font-bold" : "flex-1 py-1.5 rounded-xl border border-slate-600 bg-slate-800 text-xs font-bold hover:bg-slate-700";
+            document.getElementById('btn-imp-center').className = type === 'center' ? "flex-1 py-1.5 rounded-xl border border-emerald-500 bg-emerald-900/40 text-emerald-300 text-xs font-bold" : "flex-1 py-1.5 rounded-xl border border-slate-600 bg-slate-800 text-xs font-bold hover:bg-slate-700";
+            document.getElementById('btn-imp-slice').className = type === 'slice' ? "flex-1 py-1.5 rounded-xl border border-amber-500 bg-amber-900/40 text-amber-300 text-xs font-bold" : "flex-1 py-1.5 rounded-xl border border-slate-600 bg-slate-800 text-xs font-bold hover:bg-slate-700";
+        }
+
+        function updateClubRecommendation() {
+            const select = document.getElementById('club-select');
+            if (!select) return;
+            const dist = simState.remainDist;
+            if (dist <= 20) select.value = 'PT';
+            else if (dist <= 90) select.value = 'SW';
+            else if (dist <= 125) select.value = 'PW';
+            else if (dist <= 155) select.value = '7I';
+            else if (dist <= 180) select.value = '5I';
+            else if (dist <= 215) select.value = '3W';
+            else select.value = '1W';
+        }
+
+        function updateCameraAndHUD() {
+            if (!camera) return;
+            
+            // Aim line vector
+            const aimRad = (aimAngleDeg * Math.PI) / 180;
+            const camOffset = new THREE.Vector3(
+                Math.sin(aimRad) * 14,
+                6,
+                Math.cos(aimRad) * 18
+            );
+
+            camera.position.copy(ball.position).add(camOffset);
+            
+            const lookTarget = new THREE.Vector3()
+                .copy(ball.position)
+                .add(new THREE.Vector3(-Math.sin(aimRad) * 40, 2, -Math.cos(aimRad) * 40));
+            camera.lookAt(lookTarget);
+
+            // Update HUD
+            const hole = simCourseHoles[simState.currentHoleIdx];
+            document.getElementById('hud-hole-info').innerText = `HOLE ${simState.currentHoleIdx + 1} (PAR ${hole.par})`;
+            document.getElementById('hud-remain-dist').innerText = `${Math.round(simState.remainDist)} m`;
+            document.getElementById('hud-lie-status').innerText = simState.remainDist <= 20 ? "위치: 그린 퍼팅" : (simState.shotCount === 0 ? "위치: 티 브라켓" : "위치: 페어웨이");
+            document.getElementById('game-shot-count').innerText = `${simState.shotCount + 1}번째 샷`;
+        }
+
+        function executeShot() {
+            if (isBallFlying) return;
+
+            const club = document.getElementById('club-select').value;
+            const powerPct = parseInt(document.getElementById('power-range').value) / 100;
+            const baseDist = (clubDistances[club] || 100) * powerPct;
+
+            simState.shotCount++;
+            isBallFlying = true;
+
+            document.getElementById('shot-status-msg').classList.remove('hidden');
+            document.getElementById('execute-shot-btn').disabled = true;
+
+            const aimRad = (aimAngleDeg * Math.PI) / 180;
+            
+            // Calculate Initial Velocity
+            let sideCurve = 0;
+            if (selectedImpact === 'hook') sideCurve = -8;
+            else if (selectedImpact === 'slice') sideCurve = 8;
+
+            const speed = club === 'PT' ? baseDist * 0.45 : Math.sqrt(baseDist * 9.8);
+            const launchAngle = club === 'PT' ? 0.02 : (club === 'SW' ? 0.8 : 0.45);
+
+            ballVel.x = -Math.sin(aimRad) * speed * Math.cos(launchAngle) + sideCurve;
+            ballVel.y = speed * Math.sin(launchAngle);
+            ballVel.z = -Math.cos(aimRad) * speed * Math.cos(launchAngle);
+        }
+
+        function animateLoop() {
+            requestAnimationFrame(animateLoop);
+
+            if (isBallFlying) {
+                // Apply Gravity & Wind drag
+                if (ball.position.y > 0.8) {
+                    ballVel.y -= 0.38; // Gravity
+                    ballVel.x += Math.sin(simState.windAngle) * (simState.windSpeed * 0.02);
+                } else {
+                    // Friction on ground
+                    ballVel.multiplyScalar(0.88);
+                    ballVel.y = 0;
+                    ball.position.y = 0.8;
+
+                    if (ballVel.length() < 0.2) {
+                        ballVel.set(0, 0, 0);
+                        isBallFlying = false;
+                        onShotFinished();
+                    }
+                }
+
+                ball.position.addScaledVector(ballVel, 0.08);
+
+                // Update Camera during flight
+                camera.position.set(ball.position.x + 8, ball.position.y + 6, ball.position.z + 14);
+                camera.lookAt(ball.position);
+            }
+
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        function onShotFinished() {
+            document.getElementById('shot-status-msg').classList.add('hidden');
+            document.getElementById('execute-shot-btn').disabled = false;
+
+            simState.ballPos.copy(ball.position);
+            simState.remainDist = ball.position.distanceTo(pin.position);
+
+            // Cup-in Check (within 2m) or Putt completion
+            if (simState.remainDist <= 2.2) {
+                simState.scores[simState.currentHoleIdx] = simState.shotCount;
+                renderGameScoreboard();
+                confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+
+                if (simState.currentHoleIdx < 8) {
+                    setTimeout(() => {
+                        alert(`${simState.currentHoleIdx + 1}번 홀 홀아웃! (${simState.shotCount}타)\n다음 홀로 이동합니다.`);
+                        setupHole(simState.currentHoleIdx + 1);
+                    }, 400);
+                } else {
+                    alert(`🎉 9홀 시뮬레이션 게임을 완료하셨습니다!\n총 타수: ${simState.scores.reduce((a,b)=>a+b, 0)}타`);
+                    document.getElementById('save-sim-to-game-records-btn').classList.remove('hidden');
+                }
+            } else {
+                updateClubRecommendation();
+                updateCameraAndHUD();
+            }
+        }
+
+        function renderGameScoreboard() {
+            const row = document.getElementById('game-score-row');
+            if (!row) return;
+
+            let total = 0;
+            let cellsHTML = '<td class="text-slate-400">타수</td>';
+            for (let i = 0; i < 9; i++) {
+                const sc = simState.scores[i];
+                if (sc !== null) {
+                    total += sc;
+                    cellsHTML += `<td class="text-emerald-400">${sc}</td>`;
+                } else {
+                    cellsHTML += `<td>-</td>`;
+                }
+            }
+            cellsHTML += `<td class="text-amber-400">${total > 0 ? total : '-'}</td>`;
+            row.innerHTML = cellsHTML;
+
+            document.getElementById('game-total-score-badge').innerText = `Total: ${total}`;
+        }
 
         function saveGameSimResult() {
             if (!simState.scores.every(s => s !== null)) return;
