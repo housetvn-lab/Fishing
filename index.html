@@ -534,6 +534,81 @@
             'PT': 15
         };
 
+        // Automatically select best club matching remaining distance
+        function autoSelectBestClub(remainDist) {
+            const clubSelect = document.getElementById('club-select');
+            if (!clubSelect) return;
+
+            if (remainDist <= 15) {
+                clubSelect.value = 'PT';
+            } else if (remainDist <= 75) {
+                clubSelect.value = 'SW56';
+            } else if (remainDist <= 98) {
+                clubSelect.value = 'AW50';
+            } else if (remainDist <= 118) {
+                clubSelect.value = 'PW';
+            } else if (remainDist <= 135) {
+                clubSelect.value = '9I';
+            } else if (remainDist <= 145) {
+                clubSelect.value = '8I';
+            } else if (remainDist <= 155) {
+                clubSelect.value = '7I';
+            } else if (remainDist <= 165) {
+                clubSelect.value = '6I';
+            } else if (remainDist <= 175) {
+                clubSelect.value = '5I';
+            } else if (remainDist <= 190) {
+                clubSelect.value = '4UT';
+            } else if (remainDist <= 215) {
+                clubSelect.value = '5W';
+            } else {
+                clubSelect.value = '1W';
+            }
+
+            onClubSelectChange();
+        }
+
+        function onClubSelectChange() {
+            const club = document.getElementById('club-select').value;
+            const dist = clubDistances[club] || 150;
+            const targetInput = document.getElementById('target-dist-input');
+            if (targetInput) targetInput.value = Math.min(dist, simState.remainDist > 0 ? simState.remainDist : dist);
+            renderCourseCanvas();
+        }
+
+        function adjustAim(deg) {
+            aimAngleDeg = Math.max(-25, Math.min(25, aimAngleDeg + deg));
+            updateAimDisplay();
+            renderCourseCanvas();
+        }
+
+        function updateAimDisplay() {
+            const label = document.getElementById('aim-angle-label');
+            if (!label) return;
+            if (aimAngleDeg === 0) label.innerText = "0° (직진)";
+            else if (aimAngleDeg > 0) label.innerText = `+${aimAngleDeg}° (우측)`;
+            else label.innerText = `${aimAngleDeg}° (좌측)`;
+        }
+
+        function setImpact(type) {
+            selectedImpact = type;
+            ['hook', 'center', 'slice'].forEach(t => {
+                const btn = document.getElementById(`btn-imp-${t}`);
+                if (btn) {
+                    if (t === type) {
+                        btn.className = "flex-1 py-1.5 rounded-xl border border-emerald-500 bg-emerald-900/40 text-emerald-300 text-xs font-bold";
+                    } else {
+                        btn.className = "flex-1 py-1.5 rounded-xl border border-slate-600 bg-slate-800 text-xs font-bold hover:bg-slate-700";
+                    }
+                }
+            });
+            renderCourseCanvas();
+        }
+
+        function updateClubRecommendation() {
+            autoSelectBestClub(simState.remainDist);
+        }
+
         function init2DCourseSim() {
             canvas = document.getElementById('course-canvas');
             if (!canvas) return;
@@ -586,61 +661,6 @@
 
             const saveBtn = document.getElementById('save-sim-to-game-records-btn');
             if (saveBtn) saveBtn.classList.add('hidden');
-        }
-
-        function resizeCanvas() {
-            if (!canvas) return;
-            const container = canvas.parentElement;
-            if (container && container.clientWidth > 0 && container.clientHeight > 0) {
-                canvas.width = container.clientWidth;
-                canvas.height = container.clientHeight;
-            }
-        }
-
-        function setupHole(holeIdx) {
-            simState.currentHoleIdx = holeIdx;
-            simState.shotCount = 0;
-            const dist = simCourseHoles[holeIdx].dist;
-            simState.remainDist = dist;
-
-            resizeCanvas();
-
-            // Start Ball Position (Bottom center Tee Box)
-            currentBallPos = { x: (canvas.width || 320) / 2, y: (canvas.height || 380) - 45 };
-            targetBallPos = { ...currentBallPos };
-            shotTrajectory = [ { x: currentBallPos.x, y: currentBallPos.y, z: 0 } ];
-
-            // Randomize wind
-            const winds = ["북서풍", "남동풍", "맞바람", "뒷바람", "좌측풍"];
-            simState.windDirText = winds[Math.floor(Math.random() * winds.length)];
-            simState.windSpeed = (Math.random() * 4 + 1).toFixed(1);
-
-            aimAngleDeg = 0;
-            updateAimDisplay();
-            updateClubRecommendation();
-            renderCourseCanvas();
-            updateHUDInfo();
-            renderGameScoreboard();
-
-            document.getElementById('save-sim-to-game-records-btn').classList.add('hidden');
-        }
-
-        function renderGameScoreboard() {
-            const scoreRow = document.getElementById('game-score-row');
-            if (!scoreRow) return;
-            let sum = 0;
-            let html = '<td class="text-slate-400">타수</td>';
-            simState.scores.forEach(s => {
-                if (s !== null) {
-                    sum += s;
-                    html += `<td>${s}</td>`;
-                } else {
-                    html += '<td>-</td>';
-                }
-            });
-            html += `<td class="text-amber-400">${sum || '-'}</td>`;
-            scoreRow.innerHTML = html;
-            document.getElementById('game-total-score-badge').innerText = `Total: ${sum}`;
         }
 
         function renderCourseCanvas() {
@@ -753,6 +773,52 @@
                 });
             }
 
+            // PRE-SHOT AIMING & LANDING PREVIEW LINE (샷 전 미리보기)
+            if (!isShotInProgress) {
+                const club = document.getElementById('club-select')?.value || '7I';
+                const inputDist = parseFloat(document.getElementById('target-dist-input')?.value);
+                const clubMaxDist = clubDistances[club] || 150;
+                const baseDist = !isNaN(inputDist) ? inputDist : clubMaxDist;
+
+                const aimRad = (aimAngleDeg * Math.PI) / 180;
+                let sideOffset = 0;
+                if (selectedImpact === 'hook') sideOffset = -22;
+                else if (selectedImpact === 'slice') sideOffset = 22;
+
+                const totalHoleDist = simCourseHoles[simState.currentHoleIdx].dist;
+                const pyDistance = (baseDist / totalHoleDist) * (h * 0.68);
+
+                const prevTargetX = currentBallPos.x + Math.sin(aimRad) * pyDistance + sideOffset;
+                const prevTargetY = Math.max(h * 0.15, currentBallPos.y - Math.cos(aimRad) * pyDistance);
+
+                // Dotted Aim Line
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(currentBallPos.x, currentBallPos.y);
+                ctx.lineTo(prevTargetX, prevTargetY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Target Landing Spot Crosshair & Radius Ring
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(prevTargetX, prevTargetY, 14, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.fillStyle = 'rgba(245, 158, 11, 0.3)';
+                ctx.beginPath();
+                ctx.arc(prevTargetX, prevTargetY, 14, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Target Distance Label Badge
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillText(`📍 ${baseDist.toFixed(0)}m Target`, prevTargetX - 35, prevTargetY - 20);
+            }
+
             // Top-Right Screen Golf Mini-Map Overlay Notepad Widget (Mirroring Image 1 & 2 Right Side)
             renderScreenGolfMiniMapWidget(w, h, isGreenMode);
 
@@ -854,14 +920,33 @@
             const clubMaxDist = clubDistances[club] || 150;
             const baseDist = !isNaN(inputDist) ? inputDist : clubMaxDist;
 
-            // Real shot meter with wind factor
-            const actualDist = baseDist * (0.97 + Math.random() * 0.06);
+            // Random miss-shot / impact error factor simulation (15% chance of miss-shot)
+            let missMultiplier = 1.0;
+            let randomSideErr = 0;
+            let missNote = "";
+
+            const isMissShot = Math.random() < 0.18; // 18% chance of realistic miss shot
+            if (isMissShot && club !== 'PT') {
+                const missType = Math.random();
+                if (missType < 0.33) {
+                    missMultiplier = 0.65; // 뒷땅 (Fat hit)
+                    missNote = " ⚠️ [뒷땅] 비거리 감소!";
+                } else if (missType < 0.66) {
+                    randomSideErr = (Math.random() < 0.5 ? -35 : 35); // 톱볼 / 패닉 슬라이스
+                    missNote = " ⚠️ [임팩트 미스] 좌/우 편차 발생!";
+                } else {
+                    missMultiplier = 1.15; // 톱볼 오버 (Topped ball)
+                    missNote = " ⚠️ [톱볼] 거리 익스텐션!";
+                }
+            }
+
+            const actualDist = baseDist * (0.96 + Math.random() * 0.08) * missMultiplier;
 
             // Vector math
             const aimRad = (aimAngleDeg * Math.PI) / 180;
-            let sideMiss = 0;
-            if (selectedImpact === 'hook') sideMiss = -20;
-            else if (selectedImpact === 'slice') sideMiss = 20;
+            let sideMiss = randomSideErr;
+            if (selectedImpact === 'hook') sideMiss += -20;
+            else if (selectedImpact === 'slice') sideMiss += 20;
 
             const totalHoleDist = simCourseHoles[simState.currentHoleIdx].dist;
             const pyDistance = (actualDist / totalHoleDist) * (canvas.height * 0.68);
@@ -877,6 +962,10 @@
             else if (club === '4UT' || club === '5I' || club === '6I') currentMaxApexHeight = 45;
             else if (club === 'PT') currentMaxApexHeight = 0;
             else currentMaxApexHeight = 60; // Wedges high launch arc
+
+            if (missNote && statusMsg) {
+                statusMsg.innerText = `샷 비행 연산 중...${missNote}`;
+            }
 
             animProgress = 0;
             const startX = currentBallPos.x;
