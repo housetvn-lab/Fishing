@@ -1,842 +1,155 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>골프 키우기 & 스크린 시뮬레이터 RPG</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Canvas Confetti -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&family=Noto+Serif+KR:wght@600;700&display=swap');
-        
-        :root {
-            --serif: 'Noto Serif KR', serif;
-            --sans: 'Pretendard', sans-serif;
-        }
-        
-        body {
-            font-family: var(--sans);
-            background-color: #0b1120;
-            color: #f1f5f9;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        .font-serif-custom {
-            font-family: var(--serif);
-        }
-
-        /* RPG Game Glassmorphism & Gold Theme */
-        .rpg-panel {
-            background: rgba(15, 23, 42, 0.88);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(245, 158, 11, 0.25);
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
-        }
-
-        .rpg-button-gold {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: #1e1b4b;
-            font-weight: 800;
-            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
-            border: 1px solid #fde68a;
-        }
-
-        .rpg-button-gold:active {
-            transform: scale(0.97);
-        }
-
-        .sc-table th, .sc-table td {
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 6px 2px;
-            text-align: center;
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(245, 158, 11, 0.3);
-            border-radius: 4px;
-        }
-    </style>
-</head>
-<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
-
-    <!-- Top Status Bar (RPG Currency & Combat Power Header) -->
-    <header class="rpg-panel sticky top-0 z-40 px-3 py-2 border-b border-amber-500/30">
-        <div class="max-w-md mx-auto flex flex-col gap-1.5">
-            <!-- Top Row: Combat Power & Currencies -->
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-slate-950 font-black text-xs shadow-md">
-                        ⚡
-                    </div>
-                    <div>
-                        <div class="text-[10px] text-amber-400 font-bold uppercase tracking-wider">전투력 (CP)</div>
-                        <div id="top-cp-label" class="font-black text-sm text-white font-serif-custom">52K 450</div>
-                    </div>
-                </div>
-
-                <!-- Currency Bar -->
-                <div class="flex items-center gap-3">
-                    <div class="flex items-center gap-1 bg-slate-900/90 px-2.5 py-1 rounded-full border border-sky-500/40 shadow-inner">
-                        <span class="text-xs">💎</span>
-                        <span id="top-gem-val" class="text-xs font-bold text-sky-300">1,250</span>
-                    </div>
-                    <div class="flex items-center gap-1 bg-slate-900/90 px-2.5 py-1 rounded-full border border-amber-500/40 shadow-inner">
-                        <span class="text-xs">🪙</span>
-                        <span id="top-gold-val" class="text-xs font-bold text-amber-300">45.2K</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab Buttons (RPG Menu & Practice & Sim Game) -->
-            <div class="grid grid-cols-5 bg-slate-950/90 p-1 rounded-xl border border-amber-500/20 text-[11px] font-bold gap-1 text-center">
-                <button id="nav-btn-idle" onclick="switchMainTab('idle')" class="py-1.5 rounded-lg bg-amber-500 text-slate-950 shadow-md transition flex flex-col items-center justify-center gap-0.5">
-                    <i data-lucide="sword" class="w-3.5 h-3.5"></i> 키우기
-                </button>
-                <button id="nav-btn-game" onclick="switchMainTab('game')" class="py-1.5 rounded-lg text-slate-400 hover:text-white transition flex flex-col items-center justify-center gap-0.5">
-                    <i data-lucide="gamepad-2" class="w-3.5 h-3.5"></i> 3D시뮬
-                </button>
-                <button id="nav-btn-practice" onclick="switchMainTab('practice')" class="py-1.5 rounded-lg text-slate-400 hover:text-white transition flex flex-col items-center justify-center gap-0.5">
-                    <i data-lucide="target" class="w-3.5 h-3.5"></i> 연습장
-                </button>
-                <button id="nav-btn-prac-stats" onclick="switchMainTab('prac-stats')" class="py-1.5 rounded-lg text-slate-400 hover:text-white transition flex flex-col items-center justify-center gap-0.5">
-                    <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> 연습기록
-                </button>
-                <button id="nav-btn-gacha" onclick="switchMainTab('gacha')" class="py-1.5 rounded-lg text-slate-400 hover:text-white transition flex flex-col items-center justify-center gap-0.5">
-                    <i data-lucide="box" class="w-3.5 h-3.5"></i> 장비상점
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- App Main Area -->
-    <main class="max-w-md mx-auto w-full flex-1 p-3 pb-24 space-y-3">
-
-        <!-- ========================================== -->
-        <!-- TAB 1: IDLE GOLF HERO & STAGE (키우기 탭) -->
-        <!-- ========================================== -->
-        <div id="tab-view-idle" class="space-y-3">
-            <!-- Stage Battle Arena Header -->
-            <div class="rpg-panel p-3.5 rounded-3xl relative overflow-hidden flex flex-col gap-2">
-                <div class="absolute inset-0 bg-gradient-to-r from-emerald-950/40 to-indigo-950/40 pointer-events-none"></div>
-                <div class="flex justify-between items-center z-10">
-                    <div class="flex items-center gap-2">
-                        <span class="px-2.5 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-full text-[10px] font-black uppercase">투어 스테이지</span>
-                        <span id="idle-stage-label" class="text-sm font-bold text-white font-serif-custom">Stage 15 - 3</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="toggleAutoStage()" id="auto-stage-btn" class="px-3 py-1 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-900/50 flex items-center gap-1">
-                            <span id="auto-stage-dot" class="w-2 h-2 rounded-full bg-white animate-ping"></span> 자동 사냥 ON
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Boss Summon & Field Animation View -->
-                <div class="relative w-full h-40 bg-slate-950 rounded-2xl border border-slate-800 flex flex-col items-center justify-center overflow-hidden shadow-inner">
-                    <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:16px_16px]"></div>
-                    
-                    <!-- Character Avatar & Floating Numbers -->
-                    <div id="idle-character-avatar" class="text-4xl animate-bounce mb-2">🏌️‍♂️</div>
-                    <div id="idle-combat-text" class="text-xs font-black text-amber-400 font-serif-custom animate-pulse">DRIVE DISTANCE +245m! CRITICAL HIT!</div>
-                    
-                    <!-- Monster / Hole Target HP Bar -->
-                    <div class="w-48 bg-slate-800 rounded-full h-2 mt-3 overflow-hidden border border-slate-700">
-                        <div id="stage-hp-bar" class="bg-gradient-to-r from-amber-500 to-rose-500 h-full w-3/4 transition-all duration-300"></div>
-                    </div>
-                    <div class="text-[10px] text-slate-400 mt-1 font-bold">홀 핀 공략 진행도</div>
-                </div>
-
-                <!-- Auto-Farming Reward Ticker -->
-                <div class="flex justify-between items-center bg-slate-900/90 px-3 py-2 rounded-xl border border-slate-800 text-xs">
-                    <span class="text-slate-400">분당 골드 수급량: <b class="text-amber-400">+1,450 🪙/분</b></span>
-                    <button onclick="claimIdleReward()" class="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-xs shadow-md">
-                        보상 수령
-                    </button>
-                </div>
-            </div>
-
-            <!-- Golfer Hero Status Card (레벨업 & 승급 패널) -->
-            <div class="rpg-panel p-4 rounded-3xl space-y-3">
-                <div class="flex items-center justify-between border-b border-amber-500/20 pb-2">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-600 to-yellow-400 flex items-center justify-center text-2xl shadow-lg border border-amber-300">
-                            🏆
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-1.5">
-                                <h3 id="hero-name-label" class="font-bold text-sm text-white">에이스 프로 골퍼</h3>
-                                <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] font-black border border-amber-500/30" id="hero-grade-badge">LEGENDARY</span>
-                            </div>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Lv. <span id="hero-level-label">48</span> / 100 (비거리 특화)</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-[10px] text-slate-400 font-bold">장착 클럽</div>
-                        <div id="equipped-club-label" class="text-xs font-bold text-amber-300">명품 드라이버 +5</div>
-                    </div>
-                </div>
-
-                <!-- Stats Grid (공격력, 비거리, 정밀도, 퍼팅) -->
-                <div class="grid grid-cols-2 gap-2 text-xs">
-                    <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
-                        <span class="text-slate-400 font-semibold">드라이버 비거리</span>
-                        <span id="stat-power-label" class="font-bold text-emerald-400 font-serif-custom">265 m</span>
-                    </div>
-                    <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
-                        <span class="text-slate-400 font-semibold">정확도 (적중)</span>
-                        <span id="stat-acc-label" class="font-bold text-sky-400 font-serif-custom">94.5 %</span>
-                    </div>
-                    <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
-                        <span class="text-slate-400 font-semibold">퍼팅 감각</span>
-                        <span id="stat-putt-label" class="font-bold text-amber-400 font-serif-custom">1.2 타</span>
-                    </div>
-                    <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
-                        <span class="text-slate-400 font-semibold">크리티컬 확률</span>
-                        <span id="stat-crit-label" class="font-bold text-rose-400 font-serif-custom">28.4 %</span>
-                    </div>
-                </div>
-
-                <!-- Level Up & Promote Buttons -->
-                <div class="grid grid-cols-2 gap-2 pt-1">
-                    <button onclick="upgradeHeroLevel()" class="rpg-button-gold py-3 rounded-xl text-xs flex flex-col items-center justify-center">
-                        <span class="font-black text-sm">레벨업 강화</span>
-                        <span id="hero-lvlup-cost" class="text-[10px] opacity-80">🪙 2,400 Gold</span>
-                    </button>
-                    <button onclick="promoteHeroGrade()" class="py-3 bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold rounded-xl text-xs border border-amber-500/40 shadow-md flex flex-col items-center justify-center transition">
-                        <span class="font-black text-sm">프로 승급</span>
-                        <span class="text-[10px] text-slate-400">💎 100 Gems</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Quick Auto-Farm Team Deck (하단 영웅/덱 슬롯 - 레퍼런스 스타일) -->
-            <div class="rpg-panel p-3.5 rounded-3xl space-y-2">
-                <div class="flex justify-between items-center text-xs font-bold">
-                    <span class="text-slate-300">내 골퍼 & 장비 덱 슬롯</span>
-                    <span class="text-amber-400 text-[10px]">시너지 효과 발동중</span>
-                </div>
-                <div class="grid grid-cols-6 gap-1.5">
-                    <div class="bg-slate-900/90 aspect-square rounded-xl border-2 border-amber-500 flex flex-col items-center justify-center text-lg shadow-md relative">
-                        <span>🏌️‍♂️</span>
-                        <span class="absolute bottom-0.5 right-1 text-[9px] font-black text-amber-300">+5</span>
-                    </div>
-                    <div class="bg-slate-950 aspect-square rounded-xl border border-slate-700 flex flex-col items-center justify-center text-lg opacity-70">
-                        <span>⛳</span>
-                    </div>
-                    <div class="bg-slate-950 aspect-square rounded-xl border border-slate-700 flex flex-col items-center justify-center text-lg opacity-70">
-                        <span>🏌️‍♀️</span>
-                    </div>
-                    <div class="bg-slate-950 aspect-square rounded-xl border border-slate-700 flex flex-col items-center justify-center text-base opacity-45">
-                        <span>🔒</span>
-                    </div>
-                    <div class="bg-slate-950 aspect-square rounded-xl border border-slate-700 flex flex-col items-center justify-center text-base opacity-45">
-                        <span>🔒</span>
-                    </div>
-                    <div class="bg-slate-950 aspect-square rounded-xl border border-slate-700 flex flex-col items-center justify-center text-base opacity-45">
-                        <span>🔒</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- TAB 2: 3D MANAGER SIMULATOR GAME -->
-        <!-- ========================================== -->
-        <div id="tab-view-game" class="space-y-3 hidden">
-            <!-- Screen Golf Simulator Screen (Mirroring Real Screen Golf UI) -->
-            <div class="relative w-full h-[380px] bg-slate-950 rounded-3xl overflow-hidden border border-amber-500/30 shadow-2xl flex flex-col">
-                <canvas id="course-canvas" class="w-full h-full"></canvas>
-
-                <!-- Top Weather & Distance Overlay (Screen Golf HUD) -->
-                <div class="absolute top-3 left-3 right-3 flex justify-between items-start pointer-events-none z-10">
-                    <div class="flex flex-col gap-1">
-                        <div class="rpg-panel px-3 py-1 rounded-xl text-xs flex items-center gap-2 border border-emerald-500/30">
-                            <i data-lucide="flag" class="w-4 h-4 text-emerald-400"></i>
-                            <span id="hud-hole-info" class="font-bold text-emerald-300">HOLE 1 (PAR 4)</span>
-                        </div>
-                        <div class="rpg-panel px-3 py-1 rounded-xl text-xs flex items-center gap-2 border border-emerald-500/30">
-                            <i data-lucide="wind" class="w-4 h-4 text-teal-400"></i>
-                            <span>바람: <b id="hud-wind-text" class="text-amber-300">북서 2.5 m/s</b></span>
-                        </div>
-                    </div>
-
-                    <!-- Top Right Distance & Elevation Badge -->
-                    <div class="rpg-panel px-3 py-2 rounded-2xl border border-amber-500/40 text-right">
-                        <div class="text-[10px] text-slate-300 font-bold">남은거리</div>
-                        <div class="text-2xl font-black font-serif-custom text-amber-300 leading-none" id="hud-remain-dist">360.0m</div>
-                        <div class="text-[10px] text-emerald-400 font-bold mt-1" id="hud-height-diff">높이 +0.55m</div>
-                    </div>
-                </div>
-
-                <!-- Bottom Status Overlay -->
-                <div class="absolute bottom-3 left-3 right-3 flex justify-between items-end pointer-events-none z-10">
-                    <div class="rpg-panel px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
-                        <span id="mode-badge" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span id="hud-mode-title">티샷/코스 뷰</span>
-                    </div>
-
-                    <div id="shot-status-msg" class="rpg-panel px-3 py-1.5 rounded-xl text-xs font-bold text-amber-300 hidden border border-amber-500/40 animate-pulse">
-                        샷 비행 연산 중...
-                    </div>
-                </div>
-            </div>
-
-            <!-- Manager Controls Panel -->
-            <div id="game-controls-panel" class="rpg-panel p-4 rounded-3xl space-y-3">
-                <div class="flex justify-between items-center text-xs font-bold border-b border-amber-500/20 pb-2">
-                    <span class="text-amber-400 flex items-center gap-1">
-                        <i data-lucide="sliders" class="w-4 h-4"></i> 감독 정밀 샷 & 거리 지시
-                    </span>
-                    <span id="game-shot-count" class="text-slate-400">1번째 샷 (파 4)</span>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-[11px] font-semibold text-slate-400 mb-1 block">클럽 선택</label>
-                        <select id="club-select" onchange="onClubSelectChange()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs font-bold text-white outline-none focus:border-amber-500">
-                            <option value="1W">1W 드라이버 (230m)</option>
-                            <option value="5W">5W 우드 (200m)</option>
-                            <option value="4UT">4U 유틸리티 (180m)</option>
-                            <option value="5I">5번 아이언 (170m)</option>
-                            <option value="6I">6번 아이언 (160m)</option>
-                            <option value="7I" selected>7번 아이언 (150m)</option>
-                            <option value="8I">8번 아이언 (140m)</option>
-                            <option value="9I">9번 아이언 (130m)</option>
-                            <option value="PW">PW 피칭웨지 (110m)</option>
-                            <option value="AW50">50도 웨지 (90m)</option>
-                            <option value="SW56">56도 웨지 (70m)</option>
-                            <option value="PT">PT 퍼터 (그린)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[11px] font-semibold text-slate-400 mb-1 block">목표 비거리 지정 (m)</label>
-                        <input type="number" id="target-dist-input" placeholder="150" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-bold text-amber-300 outline-none focus:border-amber-500">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-[11px] font-semibold text-slate-400 mb-1 block">조준 방향 (에이밍)</label>
-                        <div class="flex items-center gap-1">
-                            <button onclick="adjustAim(-2)" class="bg-slate-800 hover:bg-slate-700 px-2 py-1.5 rounded-lg text-xs font-bold">-2°</button>
-                            <span id="aim-angle-label" class="flex-1 text-center font-bold text-xs text-amber-400">0° (직진)</span>
-                            <button onclick="adjustAim(2)" class="bg-slate-800 hover:bg-slate-700 px-2 py-1.5 rounded-lg text-xs font-bold">+2°</button>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-[11px] font-semibold text-slate-400 mb-1 block">구질 선택</label>
-                        <div class="flex gap-1">
-                            <button onclick="setImpact('hook')" id="btn-imp-hook" class="flex-1 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-[10px] font-bold">후크</button>
-                            <button onclick="setImpact('center')" id="btn-imp-center" class="flex-1 py-1.5 rounded-xl border border-amber-500 bg-amber-950/40 text-amber-300 text-[10px] font-bold">스트레이트</button>
-                            <button onclick="setImpact('slice')" id="btn-imp-slice" class="flex-1 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-[10px] font-bold">슬라이스</button>
-                        </div>
-                    </div>
-                </div>
-
-                <button id="execute-shot-btn" onclick="executeShot()" class="w-full py-3.5 rpg-button-gold rounded-2xl text-sm shadow-xl transition flex items-center justify-center gap-2">
-                    <i data-lucide="play" class="w-5 h-5 fill-current"></i> 샷 실행 (SWING)
-                </button>
-            </div>
-
-            <!-- Game Live Scorecard -->
-            <div class="rpg-panel p-4 rounded-3xl space-y-2">
-                <div class="flex justify-between items-center">
-                    <h3 class="font-bold text-sm text-slate-200">시뮬레이션 9홀 스코어카드</h3>
-                    <span id="game-total-score-badge" class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-extrabold text-xs">Total: 0</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs sc-table">
-                        <thead>
-                            <tr class="bg-slate-900 text-slate-400">
-                                <th>홀</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>계</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="text-slate-300">
-                                <td class="font-bold text-slate-400">파</td>
-                                <td>4</td><td>4</td><td>3</td><td>5</td><td>4</td><td>3</td><td>4</td><td>5</td><td>4</td>
-                                <td class="font-bold text-amber-400">36</td>
-                            </tr>
-                            <tr id="game-score-row" class="font-bold">
-                                <td class="text-slate-400">타수</td>
-                                <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
-                                <td class="text-amber-400">-</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- TAB 3: PRACTICE FIELD INPUT FORM (연습장) -->
-        <!-- ========================================== -->
-        <div id="tab-view-practice" class="space-y-3 hidden">
-            <div class="flex justify-between items-center">
-                <h2 class="text-base font-serif-custom font-bold text-amber-400">연습장 9홀 기록 입력</h2>
-                <button onclick="resetInputForm()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-bold rounded-lg border border-slate-700">새 입력</button>
-            </div>
-
-            <div class="rpg-panel p-3.5 rounded-2xl space-y-2 text-xs">
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-slate-400 font-bold mb-1 block">날짜</label>
-                        <input type="date" id="input-date" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white font-bold outline-none focus:border-amber-500">
-                    </div>
-                    <div>
-                        <label class="text-slate-400 font-bold mb-1 block">시스템</label>
-                        <select id="input-sys" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white font-bold outline-none focus:border-amber-500">
-                            <option>GDR (골프존)</option>
-                            <option>카카오VX</option>
-                            <option>SG골프</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="text-slate-400 font-bold mb-1 block">CC (코스명)</label>
-                    <input type="text" id="input-cc" placeholder="예: 아난티 남해 CC" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white font-bold outline-none focus:border-amber-500">
-                </div>
-            </div>
-
-            <!-- Hole Selector Chips -->
-            <div id="hole-chips-container" class="flex gap-1 overflow-x-auto pb-1 no-scrollbar"></div>
-
-            <div class="rpg-panel p-4 rounded-3xl space-y-3">
-                <h3 id="current-hole-header" class="text-sm font-bold text-amber-300 border-b border-slate-800 pb-2">1번 홀 상세 (Par 4)</h3>
-                
-                <div class="grid grid-cols-3 gap-1.5">
-                    <button id="btn-par-3" onclick="setHolePar(3)" class="py-2 bg-slate-900 rounded-xl text-xs font-bold border border-slate-700">파 3</button>
-                    <button id="btn-par-4" onclick="setHolePar(4)" class="py-2 bg-amber-600 text-slate-950 font-black rounded-xl text-xs border border-amber-400">파 4</button>
-                    <button id="btn-par-5" onclick="setHolePar(5)" class="py-2 bg-slate-900 rounded-xl text-xs font-bold border border-slate-700">파 5</button>
-                </div>
-
-                <div>
-                    <label class="text-[11px] text-slate-400 font-bold mb-1 block">거리 (m)</label>
-                    <input type="number" id="input-hole-dist" oninput="updateHoleData('dist', this.value)" placeholder="예: 360" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs font-bold text-white outline-none focus:border-amber-500">
-                </div>
-
-                <div class="grid grid-cols-3 gap-2 text-center">
-                    <div>
-                        <div class="text-[11px] text-slate-400 font-bold mb-1">타수</div>
-                        <div class="flex items-center justify-between bg-slate-900 border border-slate-700 rounded-xl p-1">
-                            <button onclick="stepHoleVal('score', -1)" class="w-7 h-7 bg-slate-800 rounded-lg font-bold text-sm">-</button>
-                            <span id="label-score" class="font-serif-custom font-bold text-base text-amber-400">4</span>
-                            <button onclick="stepHoleVal('score', 1)" class="w-7 h-7 bg-slate-800 rounded-lg font-bold text-sm">+</button>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="text-[11px] text-slate-400 font-bold mb-1">퍼트</div>
-                        <div class="flex items-center justify-between bg-slate-900 border border-slate-700 rounded-xl p-1">
-                            <button onclick="stepHoleVal('putt', -1)" class="w-7 h-7 bg-slate-800 rounded-lg font-bold text-sm">-</button>
-                            <span id="label-putt" class="font-serif-custom font-bold text-base text-amber-400">2</span>
-                            <button onclick="stepHoleVal('putt', 1)" class="w-7 h-7 bg-slate-800 rounded-lg font-bold text-sm">+</button>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="text-[11px] text-slate-400 font-bold mb-1">벌타</div>
-                        <div class="flex items-center justify-between bg-slate-900 border border-slate-700 rounded-xl p-1">
-                            <button onclick="stepHoleVal('pen', -1)" class="w-7 h-7 bg-slate-800 rounded-lg font-bold text-sm">-</button>
-                            <span id="label-pen" class="font-serif-custom font-bold text-base text-rose-400">0</span>
-                            <button onclick="stepHoleVal('pen', 1)" class="w-7 h-7 bg-slate-800 rounded-lg font-bold text-sm">+</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex gap-2 pt-2">
-                    <button onclick="navHole(-1)" class="flex-1 py-2 bg-slate-900 text-xs font-bold rounded-xl border border-slate-700">이전 홀</button>
-                    <button onclick="navHole(1)" class="flex-1 py-2 bg-slate-900 text-xs font-bold rounded-xl border border-slate-700">다음 홀</button>
-                </div>
-            </div>
-
-            <button onclick="saveCurrentRound()" class="w-full py-3.5 rpg-button-gold rounded-2xl text-sm shadow-xl transition">
-                연습장 9홀 기록 저장하기
-            </button>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- TAB 4: PRACTICE STATS & ANALYTICS -->
-        <!-- ========================================== -->
-        <div id="tab-view-prac-stats" class="space-y-4 hidden">
-            <div class="flex justify-between items-center">
-                <h2 class="text-base font-serif-custom font-bold text-slate-100">연습장 9홀 평균 & 핸디캡</h2>
-                <div class="flex gap-1.5">
-                    <button onclick="exportData()" class="px-2.5 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs font-bold text-slate-300">백업</button>
-                    <button onclick="importDataPrompt()" class="px-2.5 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs font-bold text-slate-300">복원</button>
-                </div>
-            </div>
-
-            <div class="rpg-panel p-4 rounded-3xl space-y-3">
-                <div class="grid grid-cols-3 text-center divide-x divide-slate-800">
-                    <div>
-                        <div class="text-[11px] text-slate-400 font-bold">평균 타수</div>
-                        <div class="text-2xl font-bold font-serif-custom text-amber-400 mt-0.5" id="prac-stat-avg-score">-</div>
-                    </div>
-                    <div>
-                        <div class="text-[11px] text-slate-400 font-bold">베스트 타수</div>
-                        <div class="text-2xl font-bold font-serif-custom text-emerald-400 mt-0.5" id="prac-stat-best-score">-</div>
-                    </div>
-                    <div>
-                        <div class="text-[11px] text-slate-400 font-bold">총 연습</div>
-                        <div class="text-2xl font-bold font-serif-custom text-slate-200 mt-0.5" id="prac-stat-total-rounds">0</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="rpg-panel p-4 rounded-3xl space-y-2" id="prac-stat-rec10-box"></div>
-            <div class="rpg-panel p-4 rounded-3xl space-y-2" id="prac-stat-rounds-list"></div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- TAB 5: GACHA & SHOP (장비 뽑기 상점) -->
-        <!-- ========================================== -->
-        <div id="tab-view-gacha" class="space-y-3 hidden">
-            <div class="rpg-panel p-4 rounded-3xl text-center space-y-3 border-amber-500/50">
-                <span class="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs font-bold border border-amber-500/30">🎁 프리미엄 장비 가챠</span>
-                <h2 class="text-lg font-bold font-serif-custom text-white">전설의 골프 클럽 & 샤프트 소환</h2>
-                <p class="text-xs text-slate-400">젬(Gem)을 소모하여 영웅 장비를 소환하고 전투력과 비거리를 극대화하세요!</p>
-
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button onclick="pullGacha(1)" class="py-3 bg-slate-900 border border-amber-500/40 rounded-2xl text-xs font-bold hover:bg-slate-800 transition">
-                        <div class="text-amber-400 font-black text-sm">단차 뽑기</div>
-                        <div class="text-[10px] text-slate-400 mt-0.5">💎 100 Gems</div>
-                    </button>
-                    <button onclick="pullGacha(10)" class="rpg-button-gold py-3 rounded-2xl text-xs flex flex-col items-center justify-center">
-                        <span class="font-black text-sm">10연차 소환</span>
-                        <span class="text-[10px] opacity-80">💎 900 Gems (할인)</span>
-                    </button>
-                </div>
-            </div>
-
-            <div id="gacha-result-box" class="rpg-panel p-4 rounded-3xl text-center hidden space-y-2 border-amber-400">
-                <div class="text-xs text-amber-400 font-bold">🎉 소환 결과!</div>
-                <div id="gacha-item-display" class="text-2xl font-black text-white font-serif-custom py-2">⭐ [LEGENDARY] 타이탄 드라이버</div>
-                <p id="gacha-desc-display" class="text-xs text-slate-300">비거리 +35m 및 크리티컬 확률 +10% 증가!</p>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- App Scripts & RPG Idle Engine -->
-    <script>
-        // RPG Idle & Game State
-        let idleState = {
-            gold: 15400,
-            gems: 850,
-            level: 48,
-            cp: 52450,
-            stageNum: 15,
-            stageSub: 3,
-            autoStage: true,
-            power: 265,
-            acc: 94.5,
-            putt: 1.2,
-            crit: 28.4
-        };
-
-        function updateIdleUI() {
-            document.getElementById('top-gold-val5') || document.getElementById('top-gold-val').innerText = idleState.gold.toLocaleString();
-            document.getElementById('top-gem-val').innerText = idleState.gems.toLocaleString();
-            document.getElementById('top-cp-label').innerText = `${Math.floor(idleState.cp / 1000)}K ${idleState.cp % 1000}`;
-            document.getElementById('hero-level-label').innerText = idleState.level;
-            document.getElementById('stat-power-label').innerText = `${idleState.power} m`;
-            document.getElementById('stat-acc-label').innerText = `${idleState.acc} %`;
-            document.getElementById('stat-putt-label').innerText = `${idleState.putt} 타`;
-            document.getElementById('stat-crit-label').innerText = `${idleState.crit} %`;
-            document.getElementById('hero-lvlup-cost').innerText = `🪙 ${(idleState.level * 350).toLocaleString()} Gold`;
-            document.getElementById('idle-stage-label').innerText = `Stage ${idleState.stageNum} - ${idleState.stageSub}`;
-        }
-
-        // Idle Auto-Farm Tick Loop (Every 1.5s)
-        setInterval(() => {
-            if (idleState.autoStage) {
-                idleState.gold += 35;
-                const hpBar = document.getElementById('stage-hp-bar');
-                if (hpBar) {
-                    const currentW = parseFloat(hpBar.style.width || '75%');
-                    const nextW = currentW >= 100 ? 20 : currentW + 8;
-                    hpBar.style.width = `${nextW}%`;
-                    if (nextW === 20) {
-                        idleState.stageSub++;
-                        if (idleState.stageSub > 5) {
-                            idleState.stageSub = 1;
-                            idleState.stageNum++;
-                        }
-                    }
-                }
-                updateIdleUI();
-            }
-        }, 1500);
-
-        function toggleAutoStage() {
-            idleState.autoStage = !idleState.autoStage;
-            const btn = document.getElementById('auto-stage-btn');
-            if (btn) {
-                btn.className = idleState.autoStage ? "px-3 py-1 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-900/50 flex items-center gap-1" : "px-3 py-1 bg-slate-800 text-slate-400 rounded-xl text-xs font-bold border border-slate-700 flex items-center gap-1";
-                btn.innerHTML = `<span class="w-2 h-2 rounded-full bg-white ${idleState.autoStage?'animate-ping':''}"></span> 자동 사냥 ${idleState.autoStage?'ON':'OFF'}`;
-            }
-        }
-
-        function upgradeHeroLevel() {
-            const cost = idleState.level * 350;
-            if (idleState.gold < cost) {
-                alert("골드가 부족합니다! 방치 사냥을 통해 골드를 모아보세요.");
-                return;
-            }
-            idleState.gold -= cost;
-            idleState.level++;
-            idleState.power += 3;
-            idleState.cp += 850;
-            updateIdleUI();
-            if (window.confetti) confetti({ particleCount: 30, spread: 60, origin: { y: 0.8 } });
-        }
-
-        function promoteHeroGrade() {
-            if (idleState.gems < 100) {
-                alert("젬(Gem)이 부족합니다!");
-                return;
-            }
-            idleState.gems -= 100;
-            idleState.cp += 5400;
-            idleState.crit += 2.5;
-            alert("🌟 골퍼 승급 성공! 능력치가 대폭 상승했습니다.");
-            updateIdleUI();
-        }
-
-        function claimIdleReward() {
-            idleState.gold += 2500;
-            idleState.gems += 20;
-            alert("🎁 방치 보상 수령 완료! (+2,500 Gold, +20 Gems)");
-            updateIdleUI();
-        }
-
-        function pullGacha(count) {
-            const cost = count === 1 ? 100 : 900;
-            if (idleState.gems < cost) {
-                alert("가챠에 필요한 젬(Gem)이 부족합니다!");
-                return;
-            }
-            idleState.gems -= cost;
-            const resBox = document.getElementById('gacha-result-box');
-            if (resBox) resBox.classList.remove('hidden');
-            if (window.confetti) confetti({ particleCount: 100, spread: 90, origin: { y: 0.5 } });
-            updateIdleUI();
-        }
-
-        // Tab Navigation Handling
-        function switchMainTab(targetTab) {
-            const tabs = ['idle', 'game', 'practice', 'prac-stats', 'gacha'];
-            tabs.forEach(tab => {
-                const viewEl = document.getElementById(`tab-view-${tab}`);
-                const btnEl = document.getElementById(`nav-btn-${tab}`);
-
-                if (tab === targetTab) {
-                    if (viewEl) viewEl.classList.remove('hidden');
-                    if (btnEl) btnEl.className = "py-1.5 rounded-lg bg-amber-500 text-slate-950 font-black shadow-md transition flex flex-col items-center justify-center gap-0.5";
-                } else {
-                    if (viewEl) viewEl.classList.add('hidden');
-                    if (btnEl) btnEl.className = "py-1.5 rounded-lg text-slate-400 hover:text-white transition flex flex-col items-center justify-center gap-0.5";
-                }
-            });
-
-            if (targetTab === 'game') {
-                setTimeout(() => { init2DCourseSim(); }, 100);
-            } else if (targetTab === 'prac-stats') {
-                renderPracticeStats();
-            }
-        }
-
-        // 3D/2D Simulator Core Variables (Inherited & Refined)
-        let canvas, ctx;
-        let isShotInProgress = false;
-        let currentBallPos = { x: 0, y: 0 };
-        let targetBallPos = { x: 0, y: 0 };
-        let shotTrajectory = [];
-        let aimAngleDeg = 0;
-        let selectedImpact = 'center';
-
-        const simCourseHoles = [
-            { par: 4, dist: 360 }, { par: 4, dist: 380 }, { par: 3, dist: 150 },
-            { par: 5, dist: 480 }, { par: 4, dist: 340 }, { par: 3, dist: 130 },
-            { par: 4, dist: 400 }, { par: 5, dist: 510 }, { par: 4, dist: 370 }
-        ];
-
-        let simState = {
-            currentHoleIdx: 0,
-            shotCount: 0,
-            remainDist: 360,
-            scores: Array(9).fill(null),
-            windDirText: "북서풍",
-            windSpeed: 3.2
-        };
-
-        const clubDistances = { '1W': 230, '5W': 200, '4UT': 180, '5I': 170, '6I': 160, '7I': 150, '8I': 140, '9I': 130, 'PW': 110, 'AW50': 90, 'SW56': 70, 'PT': 15 };
-
-        function init2DCourseSim() {
-            canvas = document.getElementById('course-canvas');
-            if (!canvas) return;
-            ctx = canvas.getContext('2d');
-            resizeCanvas();
-            setupHole(simState.currentHoleIdx || 0);
-        }
-
-        function resizeCanvas() {
-            if (!canvas) return;
-            const container = canvas.parentElement;
-            if (container) {
-                canvas.width = container.clientWidth || 360;
-                canvas.height = container.clientHeight || 340;
-            }
-        }
-
-        function setupHole(holeIdx) {
-            simState.currentHoleIdx = holeIdx;
-            simState.shotCount = 0;
-            simState.remainDist = simCourseHoles[holeIdx].dist;
-            resizeCanvas();
-            currentBallPos = { x: canvas.width / 2, y: canvas.height - 40, z: 0 };
-            shotTrajectory = [{ x: currentBallPos.x, y: currentBallPos.y, z: 0 }];
-            renderCourseCanvas();
-            updateHUDInfo();
-            renderGameScoreboard();
-        }
-
-        function renderCourseCanvas() {
-            if (!ctx || !canvas) return;
-            const w = canvas.width;
-            const h = canvas.height;
-            const isGreenMode = simState.remainDist <= 35;
-
-            ctx.fillStyle = isGreenMode ? '#15803d' : '#064e3b';
-            ctx.fillRect(0, 0, w, h);
-
-            if (!isGreenMode) {
-                ctx.strokeStyle = 'rgba(234, 179, 8, 0.5)';
-                ctx.lineWidth = 1.5;
-                [50, 100, 150, 200, 250].forEach(d => {
-                    const r = (d / simCourseHoles[simState.currentHoleIdx].dist) * (h * 0.7);
-                    ctx.beginPath();
-                    ctx.arc(w / 2, h - 40, r, Math.PI, 0, false);
-                    ctx.stroke();
-                });
-            }
-
-            // Ball Render
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(currentBallPos.x, currentBallPos.y, 6, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        function updateHUDInfo() {
-            const hole = simCourseHoles[simState.currentHoleIdx];
-            document.getElementById('hud-hole-info').innerText = `HOLE ${simState.currentHoleIdx + 1} (PAR ${hole.par})`;
-            document.getElementById('hud-remain-dist').innerText = `${simState.remainDist.toFixed(1)}m`;
-            document.getElementById('game-shot-count').innerText = `${simState.shotCount + 1}번째 샷`;
-        }
-
-        function executeShot() {
-            if (isShotInProgress) return;
-            isShotInProgress = true;
-            simState.shotCount++;
-
-            const club = document.getElementById('club-select').value;
-            const clubDist = clubDistances[club] || 150;
-            const actualDist = clubDist * (0.95 + Math.random() * 0.1);
-
-            simState.remainDist = Math.max(0, simState.remainDist - actualDist);
-            currentBallPos.y = Math.max(50, currentBallPos.y - 45);
-            renderCourseCanvas();
-            isShotInProgress = false;
-
-            if (simState.remainDist <= 2.0 || club === 'PT') {
-                simState.scores[simState.currentHoleIdx] = simState.shotCount;
-                if (simState.currentHoleIdx < 8) {
-                    alert(`⛳ ${simState.currentHoleIdx + 1}번 홀 홀아웃! (${simState.shotCount}타)`);
-                    setupHole(simState.currentHoleIdx + 1);
-                } else {
-                    alert("🎉 9홀 시뮬레이션 완주 완료!");
-                }
-            }
-            updateHUDInfo();
-            renderGameScoreboard();
-        }
-
-        function renderGameScoreboard() {
-            const row = document.getElementById('game-score-row');
-            if (!row) return;
-            let html = '<td class="text-slate-400">타수</td>';
-            let total = 0;
-            simState.scores.forEach(s => {
-                html += `<td class="text-amber-400">${s !== null ? s : '-'}</td>`;
-                if (s !== null) total += s;
-            });
-            html += `<td class="font-bold text-amber-300">${total > 0 ? total : '-'}</td>`;
-            row.innerHTML = html;
-        }
-
-        // Practice Field Data State
-        let practiceRoundsData = [];
-        let inputForm = { date: new Date().toISOString().split('T')[0], cc: "", sys: "GDR", holes: Array.from({length: 9}, () => ({ par: 4, dist: 360, score: 4, putt: 2, pen: 0 })) };
-        let activeHoleIdx = 0;
-
-        function setHolePar(p) { inputForm.holes[activeHoleIdx].par = p; renderHoleInput(); }
-        function stepHoleVal(k, d) {
-            let v = inputForm.holes[activeHoleIdx][k];
-            inputForm.holes[activeHoleIdx][k] = Math.max(0, v + d);
-            renderHoleInput();
-        }
-        function navHole(dir) {
-            activeHoleIdx = Math.max(0, Math.min(8, activeHoleIdx + dir));
-            renderHoleInput();
-        }
-        function renderHoleInput() {
-            const h = inputForm.holes[activeHoleIdx];
-            document.getElementById('current-hole-header').innerText = `${activeHoleIdx + 1}번 홀 상세 (Par ${h.par})`;
-            document.getElementById('label-score').innerText = h.score;
-            document.getElementById('label-putt').innerText = h.putt;
-            document.getElementById('label-pen').innerText = h.pen;
-        }
-
-        function saveCurrentRound() {
-            const r = JSON.parse(JSON.stringify(inputForm));
-            r.id = "prac_" + Date.now();
-            practiceRoundsData.push(r);
-            localStorage.setItem('screengolf_prac', JSON.stringify(practiceRoundsData));
-            alert("연습장 9홀 기록이 성공적으로 저장되었습니다!");
-        }
-
-        function renderPracticeStats() {
-            try { practiceRoundsData = JSON.parse(localStorage.getItem('screengolf_prac')) || []; } catch(e){}
-            document.getElementById('prac-stat-total-rounds').innerText = practiceRoundsData.length;
-            if (practiceRoundsData.length > 0) {
-                let totalS = 0;
-                practiceRoundsData.forEach(r => {
-                    totalS += r.holes.reduce((a,b)=>a+(+b.score||0), 0);
-                });
-                document.getElementById('prac-stat-avg-score').innerText = (totalS / practiceRoundsData.length).toFixed(1);
-            }
-        }
-
-        window.onload = function() {
-            if (window.lucide) lucide.createIcons();
-            updateIdleUI();
-            switchMainTab('idle');
-        };
-    </script>
-</body>
-</html>
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>골프 감독 키우기</title>
+<style>
+:root{--bg:#F2EEE3;--sf:#FBF9F3;--sf2:#ECE6D6;--ln:#D8CFB8;--fg:#17211B;--mu:#6B6E62;--gd:#8C6A26;--gr:#2F7A55;--rd:#A5463F;--bl:#3F6486;--font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;--serif:"Cormorant Garamond","Noto Serif KR","Nanum Myeongjo",Batang,Georgia,serif;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#070B09;--sf:#0E1411;--sf2:#151D18;--ln:#26302A;--fg:#ECE7DA;--mu:#8B9387;--gd:#C9A45C;--gr:#7FB89A;--rd:#C9706A;--bl:#8FA7BF;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#070B09;--sf:#0E1411;--sf2:#151D18;--ln:#26302A;--fg:#ECE7DA;--mu:#8B9387;--gd:#C9A45C;--gr:#7FB89A;--rd:#C9706A;--bl:#8FA7BF;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 var(--font)}
+#app{max-width:560px;margin:0 auto;padding:12px 12px 92px}
+.top{position:sticky;top:0;background:var(--sf);border-bottom:1px solid var(--gd);padding:8px 12px;z-index:5}
+.top div{max-width:560px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;font-weight:800}
+.c{background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:12px;margin-bottom:10px}
+h2{font-size:15px;margin:0 0 8px}.mu{color:var(--mu);font-size:12px}.r{display:flex;justify-content:space-between;align-items:center;gap:8px}
+button{font:inherit;color:inherit;border:1px solid var(--ln);background:var(--sf2);border-radius:12px;padding:9px 12px;cursor:pointer}
+button.g{background:linear-gradient(135deg,#F5B93B,#D9890F);color:#1B1300;border-color:#FDE29A;font-weight:800}
+button.on{border-color:var(--gd);color:var(--gd);font-weight:800}button:disabled{opacity:.4}
+.sg{display:flex;gap:6px;margin:6px 0}.sg button{flex:1}
+.bar{height:8px;background:var(--sf2);border-radius:5px;overflow:hidden}.bar i{display:block;height:100%;background:var(--gd)}
+.big{font-size:26px;font-weight:900}.gr{color:var(--gr)}.rd{color:var(--rd)}.gd{color:var(--gd)}
+.hs{display:grid;grid-template-columns:repeat(9,1fr);gap:3px;text-align:center;font-weight:800;margin-top:6px}.hs span{background:var(--sf2);border-radius:6px;padding:4px 0;font-size:12px}
+.lg{font-size:12px;color:var(--mu);margin:3px 0}.lg b{color:var(--fg)}
+input{width:100%;font:inherit;color:inherit;background:var(--sf2);border:1px solid var(--ln);border-radius:10px;padding:9px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--sf);border-top:1px solid var(--gd);display:flex;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+nav button{flex:1;border:0;background:none;padding:10px 2px;color:var(--mu);font-weight:700}nav button.on{color:var(--gd);box-shadow:inset 0 2px 0 var(--gd)}
+@keyframes pop{0%{transform:scale(.3) rotate(-8deg);opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+@keyframes fall{from{transform:translateY(-10px) rotate(0);opacity:1}to{transform:translateY(160px) rotate(360deg);opacity:0}}
+@keyframes drift{from{transform:translateX(-70px)}to{transform:translateX(380px)}}
+@keyframes rise{from{transform:translateY(8px);opacity:0}30%{opacity:1}to{transform:translateY(-24px);opacity:0}}
+@keyframes glow{0%,100%{box-shadow:0 0 6px var(--rc)}50%{box-shadow:0 0 18px var(--rc)}}
+#scn svg{display:block;width:100%;border-radius:12px;margin-bottom:8px}
+.pk{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+.rc{border:2px solid var(--rc);border-radius:12px;padding:6px 2px;text-align:center;font-size:11px;background:var(--sf2);animation:pop .5s both,glow 2s infinite;animation-delay:calc(var(--i)*.12s),0s}
+.fx{position:absolute;right:96px;color:var(--gr);font-weight:900;animation:rise 1s both}
+.cf{animation:fall 1.6s ease-in both}.bn{animation:pop .5s both;transform-box:fill-box;transform-origin:center}.cld{animation:drift linear infinite}
+@media (prefers-reduced-motion:reduce){.rc,.cf,.bn,.cld{animation:none}}
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Noto+Serif+KR:wght@500;600&display=swap");
+.top{background:var(--bg);border-bottom:1px solid var(--ln)}.logo{font-family:var(--serif);font-size:16px;letter-spacing:.3em;color:var(--gd);font-weight:600}
+.hd{font-family:var(--serif);font-size:15px;margin-left:12px;font-weight:600;color:var(--fg)}.hd i{font-style:normal;font-family:var(--font);font-size:8px;letter-spacing:.16em;color:var(--mu);margin-left:3px;font-weight:500}
+.c{border-radius:4px;background:linear-gradient(180deg,var(--sf),var(--bg))}
+h2{font-family:var(--serif);font-size:15px;letter-spacing:.1em;font-weight:600;color:var(--gd)}.mu{letter-spacing:.03em}
+.big{font-family:var(--serif);font-weight:600;font-size:30px}
+button{border-radius:3px;background:transparent;letter-spacing:.04em}button.g{background:var(--gd);color:#0B0F0C;border-color:var(--gd);font-weight:700}
+button.on{background:var(--sf2)}.hs span{border-radius:2px;background:transparent;border:1px solid var(--ln)}
+nav{background:var(--bg);border-top:1px solid var(--ln)}nav button.on{box-shadow:inset 0 1px 0 var(--gd)}
+#scn svg{border-radius:3px}
+.rc{border-radius:3px;background:linear-gradient(150deg,var(--sf2),var(--sf));position:relative;overflow:hidden;border:1px solid var(--rc);animation:fu .6s both;animation-delay:calc(var(--i)*.1s)}
+.rc::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.16),transparent);animation:sh 3.6s infinite}
+@keyframes sh{to{left:130%}}@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.lt{animation:ls .9s both}@keyframes ls{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+.cld{animation-timing-function:linear}
+.fx{font-family:var(--serif)}
+@media (prefers-reduced-motion:reduce){.rc,.rc::after,.lt{animation:none}}
+</style></head><body>
+<div class="top"><div><span class="logo">GOLF DIRECTOR</span><span id="res" class="mu"></span></div></div>
+<div id="app"></div>
+<nav><button data-a="tab" data-v="play">경기</button><button data-a="tab" data-v="train">훈련</button><button data-a="tab" data-v="gear">장비</button><button data-a="tab" data-v="real">현실 연동</button></nav>
+<script>
+var cl=function(x,a,b){return Math.max(a,Math.min(b,x))},f=function(n){return Math.round(n).toLocaleString()},$=function(i){return document.getElementById(i)};
+function N(){return Math.sqrt(-2*Math.log(Math.random()||1e-9))*Math.cos(6.2832*Math.random())}
+var SK=[["pow","비거리"],["acc","방향성"],["iron","아이언"],["sg","숏게임"],["putt","퍼팅"],["mind","멘탈"]];
+var TIER=[{n:"동호회 컵",fame:0,pz:300,fw:26,sp:9.2,fd:7,pr:0},{n:"지역 오픈",fame:200,pz:900,fw:22,sp:10,fd:5,pr:.1},{n:"프로 투어",fame:900,pz:2600,fw:19,sp:10.8,fd:3,pr:.2},{n:"메이저",fame:3000,pz:8000,fw:16,sp:11.5,fd:1.5,pr:.3}];
+var COURSE=[[4,360],[4,385],[3,150],[5,490],[4,340],[3,135],[4,405],[5,515],[4,370]],GB=[0,2,5,9,15],BL=[0,.1,.2,.3,.45],RN=["없음","일반","레어","에픽","전설"],SL=[["dr","드라이버","비거리"],["ir","아이언","아이언"],["pt","퍼터","퍼팅"],["bl","볼","바람 저항"]],ST=["안전","균형","공격"];
+function load(){var d={gold:600,gems:300,fame:0,lv:{pow:0,acc:0,iron:0,sg:0,putt:0,mind:0},base:{pow:35,acc:35,iron:35,sg:35,putt:35,mind:35},gear:{dr:0,ir:0,pt:0,bl:0},gp:0,tier:0,strat:1,auto:true,last:Date.now(),hist:[],real:[],daily:"",pull:[],rep:null};
+ try{var s=JSON.parse(localStorage.getItem("gg1"));if(s){for(var k in d)if(s[k]===undefined)s[k]=d[k];return s}}catch(e){}return d}
+var G=load(),tab="play",LV=null,coach="",SK2="",FX=null;
+function save(){try{localStorage.setItem("gg1",JSON.stringify(G))}catch(e){}}
+function sk(k){var b=G.base[k]+G.lv[k]*2;if(k=="pow")b+=GB[G.gear.dr];if(k=="iron")b+=GB[G.gear.ir];if(k=="putt")b+=GB[G.gear.pt];return cl(b,1,100)}
+function cp(){var s=0;SK.forEach(function(x){s+=sk(x[0])});return s*10}
+function simHole(i,T,W){var H=COURSE[i],par=H[0],L=H[1],hd=(i*47%360)*Math.PI/180,r=1-BL[G.gear.bl],wa=W.s*Math.cos(W.d-hd)*r,wc=W.s*Math.sin(W.d-hd)*r,st=G.strat,cm=[.96,1,1.06][st],sm=[.55,1,1.25][st]*(1+W.s/8*[-.15,0,.25][st]),m=1+T.pr*(1-sk("mind")/110)*[.4,1,1.3][st],sh=0,pen=0,pt=0,fw=null,rem=L,rough=false,gir=false,tx="",wt=Math.abs(wa)<1.5?"측풍":wa<0?"맞바람":"뒷바람";
+ if(par>3){var c=(160+.85*sk("pow"))*cm+wa*1.8,lat=N()*(30-.24*sk("acc"))*sm*m+wc*1.4;sh++;rem-=c;fw=Math.abs(lat)<T.fw;rough=!fw;
+  if(Math.abs(lat)>36){pen++;tx+="티샷 OB·해저드 +1"}else tx+="티샷 "+Math.round(c)+"m "+(fw?"페어웨이":"러프");
+  while(rem>175&&sh<6){var c2=(150+.6*sk("pow"))*cm*(rough?.9:1)+wa*1.5;rem-=c2;sh++;rough=Math.abs(N()*14*sm*m)>16;tx+=" → 세컨 "+Math.round(c2)+"m"}tx+=" → "}
+ var D=par==3?L:Math.max(30,rem),q=sk("iron"),rf=(par>3&&rough)?1.25:1,eL=N()*D*(.085-.0006*q)*sm*m*rf+wa*.9*D/150,eW=N()*D*(.065-.0005*q)*sm*m*rf+wc*D/150*1.2,ms=Math.sqrt(eL*eL+eW*eW),lim=st==0?17:12,leave;sh++;
+ if(ms<lim){gir=sh<=par-2;leave=st==0?Math.sqrt(ms*ms+30):st==2?ms*.8:ms*.9;tx+="어프로치 "+Math.round(D)+"m 그린("+leave.toFixed(1)+"m)"}
+ else{if(ms>33)pen++;sh++;leave=Math.abs(N())*(8-.06*sk("sg"))*(ms>33?1.3:1)+1.2;tx+="어프로치 "+Math.round(D)+"m "+(ms>33?"해저드 +1":"미스")+" → 칩("+leave.toFixed(1)+"m)"}
+ var d=leave,S=T.sp,sc=(.6+.04*sk("putt"))*(10/S);
+ for(var k=0;k<6;k++){sh++;pt++;if(Math.random()<(d<.5?.97:Math.exp(-Math.pow(d/sc,1.3))))break;d=d>8?Math.abs(N())*d*.16*(1.5-sk("putt")/100)*(S/10)+.5:Math.max(.4,d*.2+Math.abs(N())*.5)}
+ var s=sh+pen;return{par:par,s:s,pt:pt,fw:fw,gir:gir,tx:"<b>H"+(i+1)+"</b> 파"+par+" "+L+"m · "+wt+" "+Math.abs(wa).toFixed(1)+"m/s · "+tx+" → "+pt+"퍼트 = <b>"+s+"타</b> ("+(s-par>0?"+":"")+(s-par)+")"}}
+function simRound(T,W){var o={h:[],sc:0,pt:0,fw:0,fwN:0,gir:0};for(var i=0;i<9;i++){var h=simHole(i,T,W);o.h.push(h);o.sc+=h.s;o.pt+=h.pt;if(h.fw!==null){o.fwN++;if(h.fw)o.fw++}if(h.gir)o.gir++}return o}
+function applyRound(T,o){var z=(o.sc-(36+T.fd))/2.6,pl=1+Math.round(29/(1+Math.exp(-1.702*z))),mu=pl==1?1:pl<=3?.6:pl<=10?.3:pl<=20?.12:.05,g=Math.round(T.pz*mu),fm=Math.max(0,Math.round((31-pl)/3))*(G.tier+1),gm=pl<=3?5*(G.tier+1):0;
+ G.gold+=g;G.fame+=fm;G.gems+=gm;G.hist.push({sc:o.sc,pt:o.pt,fw:o.fw,fwN:o.fwN,gir:o.gir,pl:pl,t:G.tier,g:g});if(G.hist.length>60)G.hist.shift();return{pl:pl,g:g,fm:fm,gm:gm}}
+function newW(){return{s:Math.random()*8,d:Math.random()*6.2832}}
+function offline(){var n=Math.min(40,Math.floor((Date.now()-G.last)/45000));if(n<1)return;var T=TIER[G.tier],g=0,fm=0,gm=0,best=99,tot=0;
+ for(var i=0;i<n;i++){var o=simRound(T,newW()),r=applyRound(T,o);g+=r.g;fm+=r.fm;gm+=r.gm;best=Math.min(best,r.pl);tot+=o.sc}G.rep={n:n,g:g,fm:fm,gm:gm,best:best,avg:tot/n,tier:T.n};G.last=Date.now();save()}
+function tick(){if(!G.auto)return;if(!LV){var T=TIER[G.tier],W=newW();LV={T:T,W:W,o:simRound(T,W),hi:0,t:0,r:null}}
+ LV.t++;if(!LV.r){if(LV.t%2==0)LV.hi++;if(LV.hi>=9){LV.r=applyRound(LV.T,LV.o);G.last=Date.now();save();LV.t=0}}else if(LV.t>=5)LV=null;
+ if(tab=="play")paintLive();$("res").innerHTML=hdr()}
+function hdr(){return [[G.gold,"GOLD"],[G.gems,"GEM"],[G.fame,"FAME"],[cp(),"CP"]].map(function(x){return '<span class="hd">'+f(x[0])+'<i>'+x[1]+'</i></span>'}).join("")}
+function seg(a,arr,cur){return '<div class="sg">'+arr.map(function(o,i){return '<button class="'+(cur==i?"on":"")+'" data-a="'+a+'" data-v="'+i+'"'+(o[1]?" disabled":"")+'>'+o[0]+'</button>'}).join("")+'</div>'}
+function scene(){var L=LV;if(!L)return"";var h=L.hi>0?L.o.h[L.hi-1]:null,d=h?h.s-h.par:0,pk=h?(h.par==3?62:h.par==4?52:40):60,pth="M114 174Q190 "+pk+" 236 121",
+ lab=["이글","버디","파","보기","더블 이상"],col=["#E3C887","#E3C887","#ECE7DA","#C9A48A","#C9706A"],ix=d<=-2?0:d==-1?1:d==0?2:d==1?3:4,dl=2.6,t1="",t2="",c="#ECE7DA",sh=false,i,x;
+ if(L.r){dl=.3;t1="ROUND COMPLETE";t2=L.o.sc+"타 · "+L.r.pl+"위";c="#E3C887";sh=L.r.pl<=3}else if(h){t1="HOLE "+L.hi+" · PAR "+h.par+" · "+COURSE[L.hi-1][1]+"M";t2=lab[ix]+"  "+(d==0?"E":(d<0?"−":"+")+Math.abs(d));c=col[ix];sh=d<=-1}
+ var s='<svg viewBox="0 0 360 200" style="font-family:var(--serif)"><defs><linearGradient id="a1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A121C"/><stop offset=".45" stop-color="#2C3E50"/><stop offset=".78" stop-color="#B98A5E"/><stop offset="1" stop-color="#E9C58E"/></linearGradient>'
+ +'<radialGradient id="a2"><stop offset="0" stop-color="#FFE2A8" stop-opacity=".9"/><stop offset="1" stop-color="#FFE2A8" stop-opacity="0"/></radialGradient>'
+ +'<linearGradient id="a3" gradientUnits="userSpaceOnUse" x1="114" y1="0" x2="236" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff"/></linearGradient>'
+ +'<linearGradient id="a4"><stop offset="0" stop-color="#FFECBE" stop-opacity="0"/><stop offset=".5" stop-color="#FFECBE" stop-opacity=".35"/><stop offset="1" stop-color="#FFECBE" stop-opacity="0"/></linearGradient>'
+ +'<radialGradient id="a5" cx=".5" cy=".5" r=".75"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".6"/></radialGradient>'
+ +'<filter id="b1"><feGaussianBlur stdDeviation="5"/></filter><filter id="b2"><feGaussianBlur stdDeviation="1.3"/></filter></defs><rect width="360" height="200" fill="url(#a1)"/><circle cx="238" cy="112" r="70" fill="url(#a2)"/>';
+ for(i=0;i<2;i++)s+='<ellipse class="cld" cx="'+(60+i*120)+'" cy="'+(34+i*20)+'" rx="90" ry="4" fill="#FFE9C4" opacity=".22" filter="url(#b1)" style="animation-duration:'+Math.round(60+90/(L.W.s+1)+i*20)+'s;animation-delay:-'+(i*30)+'s;animation-iteration-count:infinite;animation-name:drift'+(Math.cos(L.W.d)<0?";animation-direction:reverse":"")+'"/>';
+ var tp="M0 130",tq="M0 130";for(x=0;x<=360;x+=5){tp+="L"+x+" "+(112-5*Math.abs(Math.sin(x*.21))-3*Math.sin(x*.7+1));tq+="L"+x+" "+(108-4*Math.abs(Math.sin(x*.13+2))-2*Math.sin(x*.5))}
+ s+='<path d="'+tq+'L360 130Z" fill="#1A2A22"/><path d="'+tp+'L360 130Z" fill="#0A1612"/><rect y="118" width="360" height="82" fill="#10281C"/><rect y="108" width="360" height="16" fill="#FFE9C4" opacity=".08" filter="url(#b1)"/>';
+ for(i=0;i<7;i++){var y0=121+79*Math.pow(i/7,1.5),y1=121+79*Math.pow((i+1)/7,1.5),f0=(y0-121)/79,f1=(y1-121)/79;s+='<polygon points="'+(222-162*f0)+","+y0+" "+(252+48*f0)+","+y0+" "+(252+48*f1)+","+y1+" "+(222-162*f1)+","+y1+'" fill="'+(i%2?"#1F4D36":"#27603F")+'"/>'}
+ s+='<ellipse cx="237" cy="121" rx="22" ry="5" fill="#3C8A5E"/><ellipse cx="237" cy="121" rx="22" ry="5" fill="none" stroke="#fff" stroke-opacity=".18"/><line x1="237" y1="121" x2="237" y2="96" stroke="#ECE7DA" stroke-width="1"/><path d="M237 96L249 100L237 104Z" fill="#C9A45C"><animate attributeName="d" dur="'+(1.6-Math.min(.9,L.W.s/10)).toFixed(2)+'s" repeatCount="indefinite" values="M237 96L249 100L237 104Z;M237 96L246 99L237 105Z;M237 96L249 100L237 104Z"/></path>';
+ s+='<g transform="translate(98,178) scale(1.05)" fill="none" stroke="#04070A" stroke-linecap="round"><circle cx="-2" cy="-54" r="5.4" fill="#04070A" stroke="none"/><path d="M0 -47L6 -26" stroke-width="8"/><path d="M6 -26L-2 0M6 -26L14 0" stroke-width="5"/><path d="M0 -45L12 -27" stroke-width="4"/><g>'+(h?'<animateTransform attributeName="transform" type="rotate" values="0 12 -27;-150 12 -27;70 12 -27;70 12 -27" keyTimes="0;.4;.65;1" dur="1.2s" fill="freeze"/>':"")+'<path d="M12 -27L30 -2" stroke="#CFC6B0" stroke-width="1.3"/><path d="M29 -3l5 1" stroke="#CFC6B0" stroke-width="3"/></g>'+(h?'<path d="M34 -2Q54 -50 14 -66" stroke="#E3C887" stroke-width="1" opacity="0"><animate attributeName="opacity" values="0;.8;0" keyTimes="0;.5;1" begin=".55s" dur=".6s" fill="freeze"/></path>':"")+'</g>';
+ if(h)s+='<path d="'+pth+'" pathLength="1" fill="none" stroke="url(#a3)" stroke-width="1.4" stroke-dasharray="1" stroke-dashoffset="1"><animate attributeName="stroke-dashoffset" from="1" to="0" begin="1s" dur="1.5s" fill="freeze"/></path><circle r="2.4" fill="#fff" filter="url(#b2)" opacity="0"><animate attributeName="opacity" from="0" to="1" begin="1s" dur=".01s" fill="freeze"/><animateMotion path="'+pth+'" begin="1s" dur="1.5s" fill="freeze"/></circle><ellipse cx="236" cy="122" rx="0" ry="0" fill="none" stroke="#fff" stroke-width=".6" opacity="0"><animate attributeName="rx" from="0" to="14" begin="2.5s" dur=".9s" fill="freeze"/><animate attributeName="ry" from="0" to="3" begin="2.5s" dur=".9s" fill="freeze"/><animate attributeName="opacity" values=".7;0" begin="2.5s" dur=".9s" fill="freeze"/></ellipse>';
+ else s+='<circle cx="114" cy="175" r="2.4" fill="#fff"/>';
+ if(sh)s+='<rect x="-120" width="120" height="200" fill="url(#a4)"><animate attributeName="x" from="-120" to="360" begin="'+dl+'s" dur="1.6s" fill="freeze"/></rect>';
+ s+='<g class="lt" style="animation-delay:'+dl+'s"><rect x="16" y="148" width="1.5" height="36" fill="#C9A45C"/><text x="24" y="157" font-size="7.5" letter-spacing="1.6" fill="#C9A45C" style="font-family:var(--font)">'+t1+'</text><text x="24" y="179" font-size="22" font-weight="600" fill="'+c+'">'+t2+'</text></g>';
+ s+='<g transform="translate(14,18)" style="font-family:var(--font)" fill="#ECE7DA" font-size="7.5" letter-spacing="1.4"><g transform="rotate('+(L.W.d*57.3).toFixed(0)+' 5 0)"><path d="M-2 0H12M8 -3L12 0L8 3" stroke="#E3C887" fill="none" stroke-width="1.2"/></g><text x="22" y="3">WIND '+L.W.s.toFixed(1)+' M/S</text></g><text x="346" y="21" text-anchor="end" font-size="7.5" letter-spacing="1.6" fill="#ECE7DA" style="font-family:var(--font)">'+(L.hi?"HOLE "+Math.min(9,L.hi)+" / 9":"TEE OFF")+'</text><rect width="360" height="200" fill="url(#a5)"/></svg>';return s}
+function radar(){var cx=60,cy=60,r=42,n=SK.length,pt=function(i,v){var a=-Math.PI/2+i*2*Math.PI/n;return[cx+Math.cos(a)*r*v,cy+Math.sin(a)*r*v]},g=[.33,.66,1].map(function(k){return '<polygon points="'+SK.map(function(x,i){return pt(i,k).map(function(v){return v.toFixed(1)}).join(",")}).join(" ")+'" fill="none" stroke="var(--ln)"/>'}).join(""),
+ lb=SK.map(function(x,i){var p=pt(i,1.28);return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" font-size="6.5" text-anchor="middle" fill="var(--mu)">'+x[1]+'</text>'}).join("");
+ return '<svg viewBox="0 0 120 120" width="132" height="132">'+g+'<polygon points="'+SK.map(function(x,i){return pt(i,sk(x[0])/100).map(function(v){return v.toFixed(1)}).join(",")}).join(" ")+'" fill="var(--gd)" fill-opacity=".22" stroke="var(--gd)" stroke-width="1.2"/>'+lb+'</svg>'}
+function liveText(){var L=LV;if(!L)return '<div class="mu">'+(G.auto?"다음 라운드 준비 중...":"자동 진행이 꺼져 있습니다.")+'</div>';var a=(L.W.d*57.3).toFixed(0);
+ return '<div class="r"><div><div class="mu">'+L.T.n+' · 라이브 중계</div><div class="big">'+L.o.h.slice(0,L.hi).reduce(function(s,h){return s+h.s},0)+'타 <span class="mu">('+L.hi+'/9홀)</span></div></div><div style="text-align:center"><svg width="42" height="42" viewBox="-23 -23 46 46"><circle r="21" fill="none" stroke="var(--ln)" stroke-width="2"/><g transform="rotate('+a+')"><path d="M0 -17L6 6L0 2L-6 6Z" fill="var(--gd)"/></g></svg><div class="mu">바람 '+L.W.s.toFixed(1)+'m/s</div></div></div><div class="hs">'+L.o.h.map(function(h,i){var d=h.s-h.par;return '<span style="'+(i<L.hi?(d<0?"color:var(--gr)":d>0?"color:var(--rd)":""):"opacity:.3")+'">'+(i<L.hi?h.s:"·")+'</span>'}).join("")+'</div>'
+ +L.o.h.slice(Math.max(0,L.hi-3),L.hi).map(function(h){return '<div class="lg">'+h.tx+'</div>'}).join("")
+ +(L.r?'<div class="lg"><b>최종 '+L.o.sc+'타 · '+L.r.pl+'위</b> · 상금 +'+f(L.r.g)+' G · 명성 +'+L.r.fm+(L.r.gm?' · 젬 +'+L.r.gm:"")+'</div>':"")}
+function paintLive(){var k=LV?LV.hi+"|"+(LV.r?1:0)+"|"+LV.W.s:"-";if(!$("scn"))return;if(k!=SK2){SK2=k;$("scn").innerHTML=scene()}$("lvt").innerHTML=liveText()}
+function vPlay(){var tr=TIER.map(function(t){return[t.n,G.fame<t.fame]});
+ var rep=G.rep?'<div class="c"><h2>방치 보상 리포트</h2><div class="lg">자리를 비운 동안 <b>'+G.rep.tier+'</b> '+G.rep.n+'라운드 · 평균 '+G.rep.avg.toFixed(1)+'타 · 최고 '+G.rep.best+'위</div><div class="lg">획득 <b>'+f(G.rep.g)+' G</b> · 명성 +'+G.rep.fm+' · 젬 +'+G.rep.gm+'</div><button data-a="rep">확인</button></div>':"";
+ var rc=G.hist.slice(-5).reverse().map(function(h){return '<div class="r lg"><span>'+TIER[h.t].n+' · '+h.sc+'타 · 퍼트 '+h.pt+'</span><span><b>'+h.pl+'위</b> +'+f(h.g)+' G</span></div>'}).join("")||'<div class="mu">아직 라운드 기록이 없습니다.</div>';
+ return rep+'<div class="c"><div id="scn"></div><div id="lvt"></div></div><div class="c"><h2>대회 선택</h2>'+seg("tier",tr,G.tier)+'<div class="mu">명성이 쌓이면 상위 대회가 열립니다. (프로 투어 900, 메이저 3000)</div><h2 style="margin-top:10px">코스 공략 (감독 지시)</h2>'+seg("strat",ST.map(function(s){return[s,0]}),G.strat)+'<div class="mu">안전: 흩어짐 감소, 그린 중앙 공략 · 공격: 거리 증가, 핀 공략, 흩어짐 증가</div><div class="r" style="margin-top:8px"><button data-a="auto" class="'+(G.auto?"g":"")+'">'+(G.auto?"자동 진행 중":"자동 진행 꺼짐")+'</button><span class="mu">앱을 닫아도 최대 30분치가 쌓입니다</span></div></div><div class="c"><h2>최근 라운드</h2>'+rc+'</div>'}
+function cost(k){return Math.round(60*Math.pow(1.22,G.lv[k]))}
+function vTrain(){var fx=FX;FX=null;var rows=SK.map(function(x){var k=x[0],v=sk(k);return '<div style="margin-bottom:10px;position:relative"><div class="r"><b>'+x[1]+' <span class="gd">'+v+'</span></b><button data-a="up" data-v="'+k+'"'+(G.lv[k]>=40?" disabled":"")+'>훈련 · '+f(cost(k))+' G</button></div>'+(fx==k?'<span class="fx">+2</span>':"")+'<div class="bar"><i style="width:'+v+'%;transition:width .6s"></i></div></div>'}).join("");
+ return '<div class="c r">'+radar()+'<div style="text-align:right"><div class="mu">전투력</div><div class="big gd">'+f(cp())+'</div></div></div><div class="c"><h2>분신 훈련</h2>'+rows+'<div class="mu">레벨당 능력치 +2 · 최대 Lv.40</div></div><div class="c"><h2>감독 분석 (최근 '+Math.min(20,G.hist.length)+'라운드)</h2><div class="lg">'+(coach||"라운드가 쌓이면 약점을 분석합니다.")+'</div></div>'}
+function analyze(){var h=G.hist.slice(-20);if(h.length<3){coach="";return}var n=h.length,fw=0,fn=0,gr=0,pt=0,sc=0;h.forEach(function(x){fw+=x.fw;fn+=x.fwN;gr+=x.gir;pt+=x.pt;sc+=x.sc});
+ var P=fn?fw/fn*100:0,Gi=gr/(9*n)*100,Pp=pt/(9*n),c=[[60-P,"방향성","티샷 페어웨이 안착 "+P.toFixed(0)+"%"],[45-Gi,"아이언","그린 적중 "+Gi.toFixed(0)+"%"],[(Pp-1.85)*100,"퍼팅","홀당 퍼트 "+Pp.toFixed(2)]].sort(function(a,b){return b[0]-a[0]})[0];
+ coach="평균 "+(sc/n).toFixed(1)+"타 · 안착 "+P.toFixed(0)+"% · GIR "+Gi.toFixed(0)+"% · 홀당 퍼트 "+Pp.toFixed(2)+"<br><b>추천 훈련: "+c[1]+"</b> ("+c[2]+")"}
+var RC=["#6B7268","#8A9288","#7FA3C0","#A78BC9","#D8B25C"];
+function ic(s,c){var a=' fill="none" stroke="'+c+'" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"',p={dr:'<path d="M9 33L27 10"'+a+'/><path d="M24 7c4-3 11-2 11 2s-6 6-11 5z"'+a+'/>',ir:'<path d="M10 34L28 9"'+a+'/><path d="M25 8h9l-2 7h-9z"'+a+'/>',pt:'<path d="M13 5L18 29"'+a+'/><path d="M11 29h16l-1 5H11z"'+a+'/>',bl:'<circle cx="20" cy="20" r="12"'+a+'/><circle cx="16" cy="17" r="1.1" fill="'+c+'"/><circle cx="23" cy="16" r="1.1" fill="'+c+'"/><circle cx="20" cy="23" r="1.1" fill="'+c+'"/>'}[s];return '<svg viewBox="0 0 40 40" width="34" height="34">'+p+'</svg>'}
+function vGear(){var gs=SL.map(function(s){var v=G.gear[s[0]];return '<div class="r lg"><span style="display:flex;align-items:center;gap:6px">'+ic(s[0],RC[v])+'<b>'+s[1]+'</b> ('+s[2]+')</span><span style="color:'+RC[v]+';font-weight:800">'+RN[v]+(s[0]=="bl"?" -"+Math.round(BL[v]*100)+"%":" +"+GB[v])+'</span></div>'}).join("");
+ var pk=G.pull.filter(function(x){return typeof x=="object"}).map(function(x,i){return '<div class="rc" style="--rc:'+RC[x.r]+';--i:'+i+'">'+ic(x.s,RC[x.r])+'<div>'+RN[x.r]+""+'</div></div>'}).join("");
+ return '<div class="c"><h2>장비 소환</h2><div class="g4"><button data-a="pull" data-v="1" style="grid-column:span 2">1회 · GEM 100</button><button class="g" data-a="pull" data-v="10" style="grid-column:span 2">10회 · GEM 900</button></div><div class="mu">일반 60% · 레어 28% · 에픽 10% · 전설 2% · 30회 안에 에픽 이상 보장 (현재 '+G.gp+'회)</div><div class="pk">'+pk+'</div></div><div class="c"><h2>장착 중</h2>'+gs+'</div><div class="c"><button data-a="daily">출석 보상 · GEM 30</button></div>'}
+function rstats(){var n=0,pt=0,pn=0,fw=0,fn=0,gr=0,gn=0,src="";try{var R=JSON.parse(localStorage.getItem("gft_r"))||[];R.forEach(function(r){var k=0;r.holes.forEach(function(h){if(h.putt!==""&&h.putt!=null&&!isNaN(+h.putt)){pt+=+h.putt;pn++}if(+h.par!=3&&h.fw){fn++;if(h.fw=="안착")fw++}if(h.gir){gn++;if(h.gir=="O")gr++}});n++});if(n)src="스크린 기록 앱"}catch(e){}
+ if(!n&&G.real.length){G.real.forEach(function(r){n++;pt+=r.p;pn+=9;fw+=r.f;fn+=7;gr+=r.g;gn+=9});src="직접 입력"}
+ return n?{n:n,putt:pn?pt/pn:null,fw:fn?fw/fn*100:null,gir:gn?gr/gn*100:null,src:src}:null}
+function vReal(){var s=rstats(),rs=G.real.slice(-5).reverse().map(function(r){return '<div class="lg">'+r.d+' · '+r.s+'타 · 퍼트 '+r.p+' · 안착 '+r.f+'/7 · GIR '+r.g+'/9</div>'}).join("");
+ return '<div class="c"><h2>현실 → 분신 보정</h2>'+(s?'<div class="lg"><b>'+s.src+'</b> '+s.n+'경기 감지<br>홀당 퍼트 '+(s.putt!=null?s.putt.toFixed(2):"-")+' · 페어웨이 '+(s.fw!=null?s.fw.toFixed(0)+"%":"-")+' · GIR '+(s.gir!=null?s.gir.toFixed(0)+"%":"-")+'</div><button class="g" data-a="cal" style="margin-top:8px">내 실력으로 분신 보정</button><div class="mu">퍼팅, 방향성, 아이언 기본 능력치가 실제 기록으로 맞춰집니다. 훈련으로 올린 레벨은 유지됩니다.</div>':'<div class="mu">아직 현실 기록이 없습니다. 아래에서 입력하거나, 스크린 기록 앱과 같은 주소(같은 GitHub Pages 계정)에 올리면 자동으로 읽어옵니다.</div>')+'</div>'
+ +'<div class="c"><h2>오늘 스크린 9홀 입력 (+GEM 40 · +800 G)</h2><div class="g4"><input id="rs" type="number" inputmode="numeric" placeholder="타수"><input id="rp" type="number" inputmode="numeric" placeholder="퍼트"><input id="rf" type="number" inputmode="numeric" placeholder="안착(7홀)"><input id="rg" type="number" inputmode="numeric" placeholder="GIR(9홀)"></div><button data-a="addreal" class="g" style="width:100%;margin-top:8px">현실 기록 저장</button>'+rs+'</div>'}
+function render(){var v=tab=="play"?vPlay():tab=="train"?vTrain():tab=="gear"?vGear():vReal();$("app").innerHTML=v;$("res").innerHTML=hdr();SK2="";if(tab=="play")paintLive();document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b.dataset.v==tab)})}
+document.addEventListener("click",function(e){var b=e.target.closest("[data-a]");if(!b||b.disabled)return;var a=b.dataset.a,v=b.dataset.v;
+ if(a=="tab"){tab=v;if(v=="train")analyze()}
+ else if(a=="tier"){if(G.fame>=TIER[+v].fame){G.tier=+v;LV=null}}else if(a=="strat"){G.strat=+v;LV=null}
+ else if(a=="auto"){G.auto=!G.auto}else if(a=="rep"){G.rep=null}
+ else if(a=="up"){var c=cost(v);if(G.gold>=c&&G.lv[v]<40){G.gold-=c;G.lv[v]++;FX=v}}
+ else if(a=="pull"){var n=+v,c=n==1?100:900;if(G.gems>=c){G.gems-=c;G.pull=[];for(var i=0;i<n;i++){G.gp++;var p=Math.random(),r=p<.02?4:p<.12?3:p<.4?2:1;if(G.gp>=30&&r<3)r=3;if(r>=3)G.gp=0;var s=SL[Math.random()*4|0];if(r>G.gear[s[0]])G.gear[s[0]]=r;G.pull.push({r:r,s:s[0]})}}}
+ else if(a=="daily"){var t=new Date().toDateString();if(G.daily!=t){G.daily=t;G.gems+=30}}
+ else if(a=="cal"){var s=rstats();if(s){if(s.putt!=null)G.base.putt=cl(Math.round(50-(s.putt-1.9)*100),5,90);if(s.fw!=null)G.base.acc=cl(Math.round(s.fw),5,90);if(s.gir!=null)G.base.iron=cl(Math.round(s.gir*1.4),5,90)}}
+ else if(a=="addreal"){var sc=+$("rs").value,p=+$("rp").value,fw=+$("rf").value,g=+$("rg").value;if(!sc||!p){alert("타수와 퍼트를 입력하세요.");return}G.real.push({d:new Date().toISOString().slice(0,10),s:sc,p:p,f:cl(fw,0,7),g:cl(g,0,9)});G.gems+=40;G.gold+=800}
+ save();render()});
+offline();render();setInterval(tick,1000);window.addEventListener("beforeunload",function(){G.last=Date.now();save()});
+</script></body></html>
