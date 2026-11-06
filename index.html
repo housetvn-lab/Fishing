@@ -1,140 +1,864 @@
-<!doctype html>
-<html lang="ko"><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>스크린 9홀 기록</title>
-<style>
-:root{--bg:#F5F0E1;--sf:#FFFDF6;--sf2:#EEE7D3;--line:#DCD2B6;--fg:#1A261E;--mu:#6B6B58;--ac:#14452F;--ink:#F6F1E4;--soft:#E2EAD9;--red:#9E2B25;--gold:#B08D3C;
---serif:"Noto Serif KR","Nanum Myeongjo",Batang,Georgia,serif;--font:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;color-scheme:light;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B1410;--sf:#12201A;--sf2:#192A22;--line:#2A3B31;--fg:#EEE7D2;--mu:#A9A690;--ac:#CDAA5C;--ink:#10190F;--soft:#1C2C22;--red:#E5675E;--gold:#D8B866;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0B1410;--sf:#12201A;--sf2:#192A22;--line:#2A3B31;--fg:#EEE7D2;--mu:#A9A690;--ac:#CDAA5C;--ink:#10190F;--soft:#1C2C22;--red:#E5675E;--gold:#D8B866;color-scheme:dark}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--font)}
-#app{max-width:560px;margin:0 auto;padding:16px 14px 96px}
-h1,h2,.big,.stp b{font-family:var(--serif)}h1{font-size:22px;margin:4px 0 12px}h2{font-size:17px;margin:0 0 8px}
-.card{background:var(--sf);border:1px solid var(--line);border-top:2px solid var(--gold);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 8px 20px -14px rgba(20,69,47,.45)}
-.mu{color:var(--mu);font-size:13px}.row{display:flex;gap:8px;align-items:center}.sp{justify-content:space-between}
-.big{font-size:32px;font-weight:700;line-height:1.1}
-button{font:inherit;color:inherit;border:1px solid var(--line);background:var(--sf2);border-radius:12px;padding:10px 12px;cursor:pointer}
-button.pri{background:var(--ac);color:var(--ink);border-color:var(--gold);font-weight:700;width:100%;padding:14px;font-size:16px}
-.seg{display:flex;gap:6px}.seg button{flex:1;padding:12px 0}.seg button.on{background:var(--ac);color:var(--ink);border-color:var(--gold);font-weight:700}
-.stp{display:flex;align-items:center;justify-content:space-between;gap:6px}.stp b{font-size:30px;min-width:44px;text-align:center}.stp button{width:54px;height:48px;font-size:22px}
-.lab{margin:14px 0 6px;font-weight:700}.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.hcs{display:flex;gap:5px;margin-bottom:10px}.hc{flex:1;padding:10px 0;font-weight:700}.hc.d{background:var(--soft);border-color:var(--ac)}.hc.on{background:var(--ac);color:var(--ink);border-color:var(--gold)}
-.f,textarea{width:100%;font:inherit;color:inherit;background:var(--sf2);border:1px solid var(--line);border-radius:10px;padding:10px}.f{margin-bottom:8px}textarea{min-height:64px;resize:vertical}
-.li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}.li:first-child{border-top:0}
-.bar{height:8px;border-radius:5px;background:var(--sf2);overflow:hidden;margin-top:4px;width:90px}.bar i{display:block;height:100%;background:var(--ac)}
-.sc{width:100%;border-collapse:collapse;font-size:13px;text-align:center}.sc td,.sc th{padding:6px 1px;border-bottom:1px solid var(--line)}.sc th{color:var(--mu);font-weight:600}
-.m{display:inline-grid;place-items:center;min-width:22px;height:22px;font-weight:700}.m.b{border-radius:50%;border:1.5px solid var(--gold)}.m.e{border-radius:50%;border:3px double var(--gold)}.m.bo{border:1.5px solid var(--fg)}.m.db{border:3px double var(--fg)}
-nav{position:fixed;left:0;right:0;bottom:0;background:var(--sf);border-top:1px solid var(--gold);display:flex;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
-nav button{flex:1;border:0;background:none;font-size:15px;padding:10px 4px;color:var(--mu)}nav button.on{color:var(--ac);font-weight:800;box-shadow:inset 0 2px 0 var(--gold)}
-#app>*{animation:up .3s ease both}@keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){#app>*{animation:none}}
-</style></head><body>
-<div id="app"></div>
-<nav><button data-a="tab" data-v="in">입력</button><button data-a="tab" data-v="st">기록</button></nav>
-<script>
-var SYS=["골프존","카카오VX","SG골프","기타"],R=[],F=null,H=0,tab="in",UID=null,DB=null,CLOUD=false;
-try{R=JSON.parse(localStorage.getItem("gft_r"))||[]}catch(e){R=[]}
-function dk(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
-function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-function pct(a,b){return b?Math.round(a/b*100):0}
-function sg(d){return(d>0?"+":"")+d}
-function newF(cc){var h=[];for(var i=0;i<9;i++)h.push({par:4,dist:"",score:"",putt:"",pen:"",fw:"",gir:""});return{id:"",date:dk(),cc:cc||"",sys:"골프존",holes:h,memo:""}}
-F=newF();
-function rt(r){var s=0,p=0,pt=0,pn=0,n=0,dm=0;r.holes.forEach(function(h){dm+=parseInt(h.dist)||0;var sc=parseInt(h.score);if(!isNaN(sc)){s+=sc;p+=(+h.par||0);n++}pt+=parseInt(h.putt)||0;pn+=parseInt(h.pen)||0});return{s:s,d:s-p,pt:pt,pn:pn,n:n,dm:dm}}
-function tt(t){return (t.dm?"총 "+t.dm+"m · ":"")+t.n+"홀 "+t.s+"타 ("+sg(t.d)+") · 퍼트 "+t.pt+" · 벌타 "+t.pn}
-function lt(){return R.slice().sort(function(a,b){return a.date<b.date?1:-1})[0]}
-function saveR(r){try{localStorage.setItem("gft_r",JSON.stringify(R))}catch(e){}
- if(DB)DB.doc("data/users/"+UID+"/"+r.id).set(r).catch(function(){CLOUD=false;render()})}
-function mk(sc,p){if(sc===""||sc==null)return"";var d=sc-p,c=d<=-2?"m e":d==-1?"m b":d==1?"m bo":d>=2?"m db":"";return c?'<span class="'+c+'">'+sc+'</span>':sc}
-function scard(r){var t=rt(r),hd="",pr="",sc="",pt="",P=0;r.holes.forEach(function(h,i){hd+='<th>'+(i+1)+'</th>';pr+='<td>'+h.par+'</td>';sc+='<td>'+mk(h.score,+h.par)+'</td>';pt+='<td>'+(h.putt===""||h.putt==null?"":h.putt)+'</td>';P+=+h.par||0});
- return '<table class="sc"><tr><th>홀</th>'+hd+'<th>계</th></tr><tr><th>파</th>'+pr+'<td>'+P+'</td></tr><tr><th>타수</th>'+sc+'<td><b>'+t.s+'</b></td></tr><tr><th>퍼트</th>'+pt+'<td>'+t.pt+'</td></tr></table>'}
-function agg(){var a={n:0,fw:[0,0],fl:0,fr:0,gir:[0,0],pt:[0,0],t3:0,pn:0,sv:0,bd:0,bo:0,db:0,P:{3:[0,0],4:[0,0],5:[0,0]},H:[]};for(var i=0;i<9;i++)a.H.push([0,0]);
- R.forEach(function(r){r.holes.forEach(function(h,i){var s=parseInt(h.score);if(isNaN(s))return;var p=+h.par||4,d=s-p;a.n++;
-  if(d<=0)a.sv++;if(d<0)a.bd++;if(d==1)a.bo++;if(d>=2)a.db++;if(a.P[p]){a.P[p][0]+=d;a.P[p][1]++}if(a.H[i]){a.H[i][0]+=d;a.H[i][1]++}
-  var q=parseInt(h.putt);if(!isNaN(q)){a.pt[0]+=q;a.pt[1]++;if(q>=3)a.t3++}a.pn+=parseInt(h.pen)||0;
-  if(p!=3&&h.fw){a.fw[1]++;if(h.fw=="안착")a.fw[0]++;if(h.fw=="좌")a.fl++;if(h.fw=="우")a.fr++}
-  if(h.gir){a.gir[1]++;if(h.gir=="O")a.gir[0]++}})});return a}
-function li(a,b){return '<div class="li"><span>'+a+'</span><b>'+b+'</b></div>'}
-function avg(x){return x[1]?sg(+(x[0]/x[1]).toFixed(1)):"—"}
-function grp(key){var m={};R.forEach(function(r){var t=rt(r);if(t.n==9&&r[key]){m[r[key]]=m[r[key]]||[0,0];m[r[key]][0]+=t.s;m[r[key]][1]++}});
- return Object.keys(m).map(function(k){return li(esc(k),(m[k][0]/m[k][1]).toFixed(1)+"타 · "+m[k][1]+"회")}).join("")}
-function trend(){var a=R.filter(function(r){return rt(r).n==9}).sort(function(x,y){return x.date<y.date?-1:1}).slice(-10).map(function(r){return rt(r).s});if(a.length<2)return"";
- var lo=Math.min.apply(null,a)-1,hi=Math.max.apply(null,a)+1,pts=a.map(function(v,i){return[10+i*(280/(a.length-1)),12+(hi-v)/(hi-lo)*60]});
- return '<div class="card"><h2>스코어 추이</h2><svg viewBox="0 0 300 90" width="100%"><polyline points="'+pts.map(function(p){return p.join(",")}).join(" ")+'" style="fill:none;stroke:var(--ac)" stroke-width="2"/>'+pts.map(function(p,i){return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3.5" style="fill:var(--gold)"/><text x="'+p[0]+'" y="'+(p[1]-7)+'" font-size="9" text-anchor="middle" style="fill:var(--mu)">'+a[i]+'</text>'}).join("")+'</svg></div>'}
-function stbar(){return CLOUD?'<div class="mu" style="margin-bottom:8px">☁ 계정에 저장 중입니다. 기기를 바꿔도 유지됩니다.</div>':'<div class="mu" style="margin-bottom:8px">⚠ 이 기기 브라우저에만 저장 중입니다. 백업 파일을 주기적으로 저장해 두세요.</div>'}
-function seg(k,arr,cur){return '<div class="seg">'+arr.map(function(o){return '<button class="'+(cur==o[0]?"on":"")+'" data-a="seg" data-k="'+k+'" data-v="'+o[0]+'">'+o[1]+'</button>'}).join("")+'</div>'}
-function stp(k,label,v){return '<div><div class="lab">'+label+'</div><div class="stp"><button data-a="step" data-k="'+k+'" data-v="-1">−</button><b>'+(v===""||v==null?"—":v)+'</b><button data-a="step" data-k="'+k+'" data-v="1">+</button></div></div>'}
-function vIn(){var h=F.holes[H],p=+h.par,ccs=[];R.forEach(function(r){if(r.cc&&ccs.indexOf(r.cc)<0)ccs.push(r.cc)});
- var chips=F.holes.map(function(x,i){return '<button class="hc '+(i==H?"on":x.score!==""?"d":"")+'" data-a="hole" data-v="'+i+'">'+(i+1)+'</button>'}).join("");
- return '<h1>'+(F.id?"라운드 수정":"스크린 9홀 기록")+'</h1><div class="card"><input class="f" type="date" data-f="date" value="'+esc(F.date)+'"><input class="f" list="ccs" data-f="cc" placeholder="CC(코스)명" value="'+esc(F.cc)+'"><datalist id="ccs">'+ccs.map(function(c){return '<option value="'+esc(c)+'">'}).join("")+'</datalist>'
- +'<select class="f" data-f="sys" style="margin:0">'+SYS.map(function(s){return '<option'+(F.sys==s?" selected":"")+'>'+s+'</option>'}).join("")+'</select></div>'
- +'<div class="hcs">'+chips+'</div><div class="card"><h2>'+(H+1)+'번 홀</h2>'
- +'<div class="lab">파</div>'+seg("par",[[3,"파3"],[4,"파4"],[5,"파5"]],p)
- +'<div class="lab">총 거리 (m)</div><input class="f" type="number" inputmode="numeric" data-k="dist" placeholder="예: 360" value="'+esc(h.dist)+'" style="margin:0">'
- +stp("score","타수",h.score)+'<div class="g2">'+stp("putt","퍼트",h.putt)+stp("pen","벌타",h.pen)+'</div>'
- +(p!=3?'<div class="lab">티샷</div>'+seg("fw",[["안착","페어웨이"],["좌","좌 미스"],["우","우 미스"]],h.fw):'')
- +'<div class="lab">그린 적중 (규정 타수 안에 온)</div>'+seg("gir",[["O","적중"],["X","실패"]],h.gir)
- +'<div class="row" style="margin-top:14px"><button data-a="prev" style="flex:1"'+(H==0?" disabled":"")+'>이전 홀</button><button data-a="next" style="flex:1"'+(H==8?" disabled":"")+'>다음 홀</button></div></div>'
- +'<div class="card"><div class="mu" id="tot">'+tt(rt(F))+'</div><textarea data-f="memo" placeholder="복기 메모 (잘된 홀, 아쉬운 홀)" style="margin-top:8px">'+esc(F.memo)+'</textarea></div>'
- +'<button class="pri" data-a="save_round">'+(F.id?"수정 저장":"라운드 저장")+'</button>'+(F.id?'<button data-a="newr" style="width:100%;margin-top:8px">새 라운드 쓰기</button>':'')}
-function rec10(){var rs=R.filter(function(r){return rt(r).n==9}).sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:0}).slice(0,10),k=rs.length;
- if(!k)return '<div class="card"><h2>최근 10경기 평균</h2><div class="mu">9홀을 모두 입력한 라운드가 쌓이면 자동으로 계산됩니다.</div></div>';
- var T=rs.map(rt),sc=T.map(function(t){return t.s}),df=T.map(function(t){return t.d}),sum=function(a){return a.reduce(function(x,y){return x+y},0)};
- var h="3경기 이상 필요";
- if(k>=3){var n=k<=5?1:k<=8?2:3,adj=k==3?-2:(k==4||k==6)?-1:0,low=df.map(function(d){return d*2}).sort(function(a,b){return a-b}).slice(0,n);h=(sum(low)/n*0.96+adj).toFixed(1)}
- var half=k>=6?Math.floor(k/2):0,tr="";
- if(half){var rc=sum(sc.slice(0,half))/half,pv=sum(sc.slice(half))/(k-half);tr=li("최근 "+half+"경기 vs 이전 "+(k-half)+"경기 (−이면 향상)",rc.toFixed(1)+" vs "+pv.toFixed(1)+" ("+sg(+(rc-pv).toFixed(1))+")")}
- return '<div class="card"><h2>최근 '+k+'경기 평균</h2>'+li("평균 타수 (9홀)",(sum(sc)/k).toFixed(1))+li("파 대비 평균",sg(+(sum(df)/k).toFixed(1)))+li("18홀 환산 평균",(sum(sc)/k*2).toFixed(1))+li("평균 퍼트 (9홀)",(sum(T.map(function(t){return t.pt}))/k).toFixed(1))+li("베스트 / 워스트",Math.min.apply(null,sc)+" / "+Math.max.apply(null,sc))+tr+li("추정 핸디캡",h)+'<div class="mu" style="margin-top:6px">코스 레이팅과 슬로프 없이 계산한 관리용 추정치입니다. 공식 핸디캡이 아닙니다.</div></div>'}
-function vSt(){var tools=stbar()+'<button data-a="backup" style="width:100%">백업 파일 저장</button><button data-a="restore" style="width:100%;margin-top:8px">백업에서 복원</button><input type="file" id="rf" accept=".json" hidden>';
- if(!R.length)return '<h1>기록</h1><div class="card mu">아직 저장된 라운드가 없습니다. 입력 탭에서 9홀을 기록해 보세요.</div>'+tools;
- var ok=R.map(rt).filter(function(t){return t.n==9}),A=agg(),L=lt(),
- av=ok.length?(ok.reduce(function(a,t){return a+t.s},0)/ok.length).toFixed(1):"—",best=ok.length?Math.min.apply(null,ok.map(function(t){return t.s})):"—";
- var hole=A.H.map(function(x,i){var w=x[1]?Math.max(4,Math.min(100,(x[0]/x[1]+.5)*50)):0;return '<div class="li"><span>'+(i+1)+'번 홀 <span class="mu">('+x[1]+'회)</span></span><span class="row"><b>'+avg(x)+'</b><span class="bar"><i style="width:'+w+'%"></i></span></span></div>'}).join("");
- var list=R.slice().sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:0}).map(function(r){var t=rt(r);return '<div class="li" data-a="edit" data-v="'+r.id+'" style="cursor:pointer"><span>'+r.date+' · '+esc(r.cc||"코스 미입력")+'</span><span class="mu">'+t.s+'타 ('+sg(t.d)+') · 퍼트 '+t.pt+'</span></div>'}).join("");
- return '<h1>기록</h1><div class="card"><div class="row sp"><div><div class="mu">평균 (9홀)</div><div class="big">'+av+'</div></div><div style="text-align:center"><div class="mu">베스트</div><div class="big">'+best+'</div></div><div style="text-align:right"><div class="mu">라운드</div><div class="big">'+R.length+'</div></div></div></div>'
- +rec10()+'<div class="card"><h2>상세 지표</h2>'
- +li("페어웨이 안착",A.fw[1]?A.fw[0]+"/"+A.fw[1]+" ("+pct(A.fw[0],A.fw[1])+"%) · 좌 "+A.fl+" · 우 "+A.fr:"기록 없음")
- +li("그린 적중(GIR)",A.gir[1]?A.gir[0]+"/"+A.gir[1]+" ("+pct(A.gir[0],A.gir[1])+"%)":"기록 없음")
- +li("홀당 퍼트",A.pt[1]?(A.pt[0]/A.pt[1]).toFixed(2)+" · 3퍼트 이상 "+A.t3+"회":"기록 없음")
- +li("파 세이브(파 이하)",pct(A.sv,A.n)+"% ("+A.sv+"/"+A.n+"홀)")
- +li("버디 이상 / 보기 / 더블 이상",A.bd+" / "+A.bo+" / "+A.db)+li("벌타 합계",A.pn)+'</div>'
- +'<div class="card"><h2>파별 평균 (파 대비)</h2>'+li("파3",avg(A.P[3]))+li("파4",avg(A.P[4]))+li("파5",avg(A.P[5]))+'</div>'
- +'<div class="card"><h2>홀 번호별 평균 (파 대비)</h2>'+hole+'</div>'
- +(grp("cc")?'<div class="card"><h2>CC별 평균</h2>'+grp("cc")+'</div>':'')+(grp("sys")?'<div class="card"><h2>시스템별 평균</h2>'+grp("sys")+'</div>':'')
- +trend()+'<div class="card"><h2>최근 스코어카드</h2><div class="mu" style="margin-bottom:6px">'+L.date+' · '+esc(L.cc||"코스 미입력")+'</div>'+scard(L)+'<div class="mu" style="margin-top:8px">◯ 버디 ◎ 이글 □ 보기 ▣ 더블 이상</div></div>'
- +'<div class="card"><h2>저장된 라운드</h2>'+list+'<div class="mu" style="margin-top:8px">누르면 수정할 수 있습니다. 삭제 기능은 없습니다.</div></div>'+tools}
-function render(){document.getElementById("app").innerHTML=tab=="in"?vIn():vSt();document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b.dataset.v==tab)})}
-document.addEventListener("click",function(e){var b=e.target.closest("[data-a]");if(!b||b.disabled)return;var a=b.dataset.a,v=b.dataset.v,k=b.dataset.k,h=F.holes[H];
- if(a=="tab"){tab=v;window.scrollTo(0,0)}
- else if(a=="hole"){H=+v}
- else if(a=="prev"){H=Math.max(0,H-1)}else if(a=="next"){H=Math.min(8,H+1)}
- else if(a=="seg"){if(k=="par"){h.par=+v;if(+v==3)h.fw=""}else h[k]=h[k]==v?"":v}
- else if(a=="step"){var d=+v,cur=h[k],base=k=="score"?+h.par:k=="putt"?2:0;if(cur===""||cur==null)cur=d>0?base:Math.max(0,base+d);else cur=Math.max(k=="score"?1:0,+cur+d);h[k]=cur}
- else if(a=="save_round"){if(!F.holes.some(function(x){return x.score!==""})){alert("타수를 하나 이상 입력하세요.");return}
-  var r=JSON.parse(JSON.stringify(F));if(!r.id)r.id="round_"+Date.now();var i=R.findIndex(function(x){return x.id==r.id});if(i<0)R.push(r);else R[i]=r;saveR(r);F=newF(r.cc);H=0;tab="st";window.scrollTo(0,0)}
- else if(a=="edit"){var f=R.find(function(x){return x.id==v});if(f){F=JSON.parse(JSON.stringify(f));F.holes.forEach(function(x){x.fw=x.fw||"";x.gir=x.gir||""});H=0;tab="in";window.scrollTo(0,0)}}
- else if(a=="newr"){F=newF(F.cc);H=0}
- else if(a=="backup"){var nm="golf_backup_"+dk()+".json",tx=JSON.stringify({rounds:R},null,1);
-  (window.claude&&claude.use?claude.use("downloads"):Promise.resolve(null)).then(function(d){if(d)return d.save({filename:nm,data:tx});var a2=document.createElement("a");a2.href=URL.createObjectURL(new Blob([tx],{type:"application/json"}));a2.download=nm;document.body.appendChild(a2);a2.click();setTimeout(function(){a2.remove()},500)}).catch(function(){})}
- else if(a=="restore"){document.getElementById("rf").click();return}
- render()});
-document.addEventListener("input",function(e){var t=e.target;
- if(t.dataset&&t.dataset.k=="dist"){var n=parseInt(t.value);F.holes[H].dist=isNaN(n)?"":n;var el=document.getElementById("tot");if(el)el.textContent=tt(rt(F))}
- else if(t.dataset&&t.dataset.f){F[t.dataset.f]=t.value}});
-document.addEventListener("change",function(e){var t=e.target;
- if(t.dataset&&t.dataset.f=="cc"&&!F.id&&!F.holes.some(function(x){return x.score!==""})){var p=R.filter(function(r){return r.cc==t.value}).sort(function(a,b){return a.date<b.date?1:-1})[0];
-  if(p){F.holes=p.holes.map(function(x){return{par:x.par,dist:x.dist==null?"":x.dist,score:"",putt:"",pen:"",fw:"",gir:""}});render()}}
- else if(t.id=="rf"&&t.files[0]){var fr=new FileReader();fr.onload=function(){try{var d=JSON.parse(fr.result);
-  (d.rounds||[]).forEach(function(r){var i=R.findIndex(function(x){return x.id==r.id});if(i<0)R.push(r);else R[i]=r;saveR(r)});render()}catch(err){alert("백업 파일을 읽을 수 없습니다.")}};fr.readAsText(t.files[0])}});
-async function initDB(){try{if(!window.claude||!claude.use)return;var u=await claude.use("user"),d=await claude.use("db");if(!u||!d)return;UID=await u.id();DB=d;
- var qs=await DB.collection("data/users/"+UID).get(),rem=[],ids={};
- qs.docs.forEach(function(x){if(x.id.indexOf("round_")==0){var o=x.data();o.id=x.id;rem.push(o);ids[x.id]=1}});
- R.forEach(function(r){if(!ids[r.id]){rem.push(r);DB.doc("data/users/"+UID+"/"+r.id).set(r)}});R=rem;
- try{localStorage.setItem("gft_r",JSON.stringify(R))}catch(e){}
- CLOUD=true;render()}catch(e){}}
-initDB();
-render();
-</script></body></html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>스크린 9홀 기록 & 3D 감독 시뮬레이터</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Three.js (3D engine) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&family=Noto+Serif+KR:wght@600;700&display=swap');
+        
+        :root {
+            --serif: 'Noto Serif KR', serif;
+            --sans: 'Pretendard', sans-serif;
+        }
+        
+        body {
+            font-family: var(--sans);
+            background-color: #0f172a;
+            color: #f8fafc;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .font-serif-custom {
+            font-family: var(--serif);
+        }
+
+        /* Glassmorphism & Soft UI */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sc-table th, .sc-table td {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 6px 2px;
+            text-align: center;
+        }
+
+        /* Score Badges */
+        .badge-eagle { border: 2px double #f59e0b; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; items-center; justify-content: center; font-weight: bold; color: #fbbf24; }
+        .badge-birdie { border: 1.5px solid #3b82f6; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; items-center; justify-content: center; font-weight: bold; color: #60a5fa; }
+        .badge-bogey { border: 1.5px solid #ef4444; width: 20px; height: 20px; display: inline-flex; items-center; justify-content: center; font-weight: bold; color: #f87171; }
+        .badge-double { border: 2.5px double #dc2626; width: 22px; height: 22px; display: inline-flex; items-center; justify-content: center; font-weight: bold; color: #ef4444; }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="glass-panel sticky top-0 z-40 px-4 py-3 border-b border-slate-700/60 shadow-lg">
+        <div class="max-w-md mx-auto flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-md">
+                        <i data-lucide="flag" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-base leading-none text-emerald-400">SCREEN GOLF 9</h1>
+                        <p class="text-[10px] text-slate-400 mt-0.5">연습장 기록 & 3D 감독 시뮬레이터</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Buttons (4 Categories) -->
+            <div class="grid grid-cols-4 bg-slate-900/80 p-1 rounded-xl border border-slate-700 text-xs font-bold gap-1 text-center">
+                <button id="nav-btn-practice" onclick="switchMainTab('practice')" class="py-1.5 rounded-lg bg-emerald-600 text-white shadow-md transition flex items-center justify-center gap-1">
+                    <i data-lucide="target" class="w-3.5 h-3.5"></i> 연습장
+                </button>
+                <button id="nav-btn-game" onclick="switchMainTab('game')" class="py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center justify-center gap-1">
+                    <i data-lucide="gamepad-2" class="w-3.5 h-3.5"></i> 3D게임
+                </button>
+                <button id="nav-btn-prac-stats" onclick="switchMainTab('prac-stats')" class="py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center justify-center gap-1">
+                    <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> 연습통계
+                </button>
+                <button id="nav-btn-game-stats" onclick="switchMainTab('game-stats')" class="py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center justify-center gap-1">
+                    <i data-lucide="trophy" class="w-3.5 h-3.5"></i> 게임기록
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- App Main Area -->
+    <main class="max-w-md mx-auto w-full flex-1 p-3 pb-24">
+
+        <!-- ========================================== -->
+        <!-- TAB 1: PRACTICE 9-HOLE RECORD INPUT -->
+        <!-- ========================================== -->
+        <div id="tab-view-practice" class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 id="input-title" class="text-lg font-serif-custom font-bold text-slate-100 flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> 연습장 9홀 기록 입력
+                </h2>
+                <button onclick="resetInputForm()" class="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> 초기화
+                </button>
+            </div>
+
+            <!-- Round General Info -->
+            <div class="glass-panel p-4 rounded-3xl space-y-3">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-400 mb-1 block">연습 날짜</label>
+                        <input type="date" id="input-date" class="w-full bg-slate-800/90 border border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-white outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-400 mb-1 block">연습장 / 타석 시스템</label>
+                        <select id="input-sys" class="w-full bg-slate-800/90 border border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-white outline-none focus:border-emerald-500">
+                            <option>GDR (골프존)</option>
+                            <option>QED</option>
+                            <option>카카오VX VX</option>
+                            <option>SG골프 SDR</option>
+                            <option>일반 야외/인도어 연습장</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-400 mb-1 block">연습 코스 / CC 명</label>
+                    <input type="text" id="input-cc" placeholder="예: GDR 9홀 모드 - 베어크리크" class="w-full bg-slate-800/90 border border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-white outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <!-- Hole Selector Chips -->
+            <div id="hole-chips-container" class="flex gap-1.5 overflow-x-auto pb-1"></div>
+
+            <!-- Single Hole Details Card -->
+            <div class="glass-panel p-4 rounded-3xl space-y-3 border-t-2 border-emerald-500">
+                <div class="flex justify-between items-center border-b border-slate-700/60 pb-2">
+                    <h3 class="font-serif-custom font-bold text-base text-emerald-400" id="current-hole-header">1번 홀 상세</h3>
+                    <span class="text-xs text-slate-400">연습 타수 기록</span>
+                </div>
+
+                <!-- Par Segment -->
+                <div>
+                    <label class="text-xs font-bold text-slate-300 mb-1.5 block">파 (Par)</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="setHolePar(3)" id="btn-par-3" class="py-2 bg-slate-800 rounded-xl text-xs font-bold border border-slate-600 hover:bg-slate-700">파 3</button>
+                        <button onclick="setHolePar(4)" id="btn-par-4" class="py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold border border-emerald-400">파 4</button>
+                        <button onclick="setHolePar(5)" id="btn-par-5" class="py-2 bg-slate-800 rounded-xl text-xs font-bold border border-slate-600 hover:bg-slate-700">파 5</button>
+                    </div>
+                </div>
+
+                <!-- Distance -->
+                <div>
+                    <label class="text-xs font-bold text-slate-300 mb-1 block">총 거리 (m)</label>
+                    <input type="number" id="input-hole-dist" oninput="updateHoleData('dist', this.value)" placeholder="예: 340" class="w-full bg-slate-800/90 border border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-white outline-none focus:border-emerald-500">
+                </div>
+
+                <!-- Score & Putts Stepper -->
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div class="bg-slate-800/70 p-2.5 rounded-2xl border border-slate-700 text-center">
+                        <label class="text-xs font-bold text-slate-300 block mb-1">타수</label>
+                        <div class="flex items-center justify-between">
+                            <button onclick="stepHoleVal('score', -1)" class="w-9 h-9 bg-slate-700 rounded-xl font-bold text-lg text-slate-200">-</button>
+                            <span id="label-score" class="text-2xl font-bold font-serif-custom text-emerald-400">4</span>
+                            <button onclick="stepHoleVal('score', 1)" class="w-9 h-9 bg-slate-700 rounded-xl font-bold text-lg text-slate-200">+</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/70 p-2.5 rounded-2xl border border-slate-700 text-center">
+                        <label class="text-xs font-bold text-slate-300 block mb-1">퍼트 수</label>
+                        <div class="flex items-center justify-between">
+                            <button onclick="stepHoleVal('putt', -1)" class="w-9 h-9 bg-slate-700 rounded-xl font-bold text-lg text-slate-200">-</button>
+                            <span id="label-putt" class="text-2xl font-bold font-serif-custom text-amber-400">2</span>
+                            <button onclick="stepHoleVal('putt', 1)" class="w-9 h-9 bg-slate-700 rounded-xl font-bold text-lg text-slate-200">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Penalty Stepper -->
+                <div class="bg-slate-800/70 p-2.5 rounded-2xl border border-slate-700 text-center">
+                    <label class="text-xs font-bold text-slate-300 block mb-1">벌타 (해저드/OB)</label>
+                    <div class="flex items-center justify-between max-w-[200px] mx-auto">
+                        <button onclick="stepHoleVal('pen', -1)" class="w-9 h-9 bg-slate-700 rounded-xl font-bold text-lg text-slate-200">-</button>
+                        <span id="label-pen" class="text-xl font-bold font-serif-custom text-rose-400">0</span>
+                        <button onclick="stepHoleVal('pen', 1)" class="w-9 h-9 bg-slate-700 rounded-xl font-bold text-lg text-slate-200">+</button>
+                    </div>
+                </div>
+
+                <!-- Fairway Hit (Tee Shot) -->
+                <div id="fw-sec">
+                    <label class="text-xs font-bold text-slate-300 mb-1 block">티샷 페어웨이 안착 (Par 4/5)</label>
+                    <div class="grid grid-cols-3 gap-2 text-xs font-bold">
+                        <button onclick="setHoleFW('안착')" id="btn-fw-good" class="py-2 bg-slate-800 border border-slate-600 rounded-xl">안착 ⭕</button>
+                        <button onclick="setHoleFW('좌')" id="btn-fw-left" class="py-2 bg-slate-800 border border-slate-600 rounded-xl">좌 미스 ⬅️</button>
+                        <button onclick="setHoleFW('우')" id="btn-fw-right" class="py-2 bg-slate-800 border border-slate-600 rounded-xl">우 미스 ➡️</button>
+                    </div>
+                </div>
+
+                <!-- GIR (Green in Regulation) -->
+                <div>
+                    <label class="text-xs font-bold text-slate-300 mb-1 block">그린 적중 (GIR)</label>
+                    <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+                        <button onclick="setHoleGIR('O')" id="btn-gir-on" class="py-2 bg-slate-800 border border-slate-600 rounded-xl">적중 🟢</button>
+                        <button onclick="setHoleGIR('X')" id="btn-gir-off" class="py-2 bg-slate-800 border border-slate-600 rounded-xl">실패 🔴</button>
+                    </div>
+                </div>
+
+                <!-- Hole Navigation Prev/Next -->
+                <div class="flex gap-2 pt-2">
+                    <button onclick="navHole(-1)" id="btn-prev-hole" class="flex-1 py-2.5 bg-slate-800 border border-slate-600 hover:bg-slate-700 font-bold rounded-xl text-xs transition">
+                        ◀ 이전 홀
+                    </button>
+                    <button onclick="navHole(1)" id="btn-next-hole" class="flex-1 py-2.5 bg-slate-800 border border-slate-600 hover:bg-slate-700 font-bold rounded-xl text-xs transition">
+                        다음 홀 ▶
+                    </button>
+                </div>
+            </div>
+
+            <!-- Memo & Save Action -->
+            <div class="glass-panel p-4 rounded-3xl space-y-3">
+                <div class="text-xs text-slate-300 font-bold" id="input-summary-text">총 0m · 0홀 0타</div>
+                <textarea id="input-memo" placeholder="오늘 연습장에서 집중 점검한 내용 (클럽 궤적, 템포, 교정 사항 등)" class="w-full bg-slate-800/90 border border-slate-600 rounded-xl p-3 text-xs text-white outline-none focus:border-emerald-500 resize-none h-20"></textarea>
+                <button onclick="saveCurrentRound()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 font-bold text-white rounded-2xl text-base shadow-lg shadow-emerald-900/40 transition">
+                    연습장 9홀 기록 저장 💾
+                </button>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: 3D MANAGER SIMULATOR GAME -->
+        <!-- ========================================== -->
+        <div id="tab-view-game" class="space-y-3 hidden">
+            <!-- Game Canvas & Overlay Screen -->
+            <div class="relative w-full h-[360px] bg-slate-900 rounded-3xl overflow-hidden border border-slate-700 shadow-2xl">
+                <div id="canvas-container" class="w-full h-full"></div>
+
+                <div class="absolute top-3 left-3 right-3 flex justify-between items-center pointer-events-none z-10">
+                    <div class="glass-panel px-3 py-1.5 rounded-xl text-xs flex items-center gap-2 border border-emerald-500/30">
+                        <i data-lucide="wind" class="w-4 h-4 text-emerald-400"></i>
+                        <span>바람 <b id="hud-wind-dir" class="text-emerald-300">북서</b> <b id="hud-wind-speed" class="text-amber-400">3.2m/s</b></span>
+                    </div>
+                    <div class="glass-panel px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 border border-emerald-500/30">
+                        <i data-lucide="compass" class="w-4 h-4 text-teal-400"></i>
+                        <span id="hud-hole-info" class="font-bold text-emerald-300">HOLE 1 (PAR 4)</span>
+                    </div>
+                </div>
+
+                <div class="absolute bottom-3 left-3 right-3 flex justify-between items-end pointer-events-none z-10">
+                    <div class="glass-panel p-2.5 rounded-2xl text-xs space-y-0.5 border border-slate-600/50">
+                        <div class="text-[10px] text-slate-400">남은 거리</div>
+                        <div class="text-2xl font-bold font-serif-custom text-emerald-400" id="hud-remain-dist">380 m</div>
+                        <div class="text-[10px] text-slate-300" id="hud-lie-status">위치: 티샷 브라켓</div>
+                    </div>
+
+                    <div id="shot-status-msg" class="glass-panel px-3 py-1.5 rounded-xl text-xs font-bold text-amber-300 hidden border border-amber-500/40 animate-pulse">
+                        공 날아가는 중...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manager Controls Panel -->
+            <div id="game-controls-panel" class="glass-panel p-4 rounded-3xl space-y-3">
+                <div class="flex justify-between items-center text-xs font-bold border-b border-slate-700/60 pb-2">
+                    <span class="text-emerald-400 flex items-center gap-1">
+                        <i data-lucide="sliders" class="w-4 h-4"></i> 감독 샷 지시
+                    </span>
+                    <span id="game-shot-count" class="text-slate-400">1번째 샷 (파 4)</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[11px] font-semibold text-slate-400 mb-1 block">클럽 선택</label>
+                        <select id="club-select" onchange="updateClubRecommendation()" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-2.5 py-2 text-xs font-bold text-white outline-none focus:border-emerald-500">
+                            <option value="1W">1W 드라이버 (230m)</option>
+                            <option value="3W">3W 우드 (200m)</option>
+                            <option value="5I">5번 아이언 (160m)</option>
+                            <option value="7I" selected>7번 아이언 (140m)</option>
+                            <option value="PW">PW 피칭웨지 (110m)</option>
+                            <option value="SW">SW 샌드웨지 (80m)</option>
+                            <option value="PT">퍼터 Putter (그린)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-semibold text-slate-400 mb-1 block">조준 방향 (좌/우 도)</label>
+                        <div class="flex items-center gap-1">
+                            <button onclick="adjustAim(-3)" class="bg-slate-700 hover:bg-slate-600 px-2 py-1.5 rounded-lg text-xs font-bold">-3°</button>
+                            <span id="aim-angle-label" class="flex-1 text-center font-bold text-xs text-amber-400">0° (직진)</span>
+                            <button onclick="adjustAim(3)" class="bg-slate-700 hover:bg-slate-600 px-2 py-1.5 rounded-lg text-xs font-bold">+3°</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <div class="flex justify-between text-xs font-semibold">
+                        <span class="text-slate-400">샷 파워 (세기)</span>
+                        <span id="power-val-label" class="text-emerald-400 font-bold">90%</span>
+                    </div>
+                    <input type="range" id="power-range" min="10" max="100" value="90" oninput="document.getElementById('power-val-label').innerText = this.value + '%'" class="w-full accent-emerald-500 bg-slate-700 rounded-lg h-2 cursor-pointer">
+                </div>
+
+                <div class="space-y-1.5">
+                    <div class="flex justify-between text-xs font-semibold">
+                        <span class="text-slate-400">임팩트 정밀도 (슬라이스/후크)</span>
+                        <span id="impact-val-label" class="text-amber-400 font-bold">정확 (Center)</span>
+                    </div>
+                    <div class="flex gap-1.5">
+                        <button onclick="setImpact('hook')" id="btn-imp-hook" class="flex-1 py-1.5 rounded-xl border border-slate-600 bg-slate-800 text-xs font-bold hover:bg-slate-700">후크 (Hook)</button>
+                        <button onclick="setImpact('center')" id="btn-imp-center" class="flex-1 py-1.5 rounded-xl border border-emerald-500 bg-emerald-900/40 text-emerald-300 text-xs font-bold">정중앙 (Center)</button>
+                        <button onclick="setImpact('slice')" id="btn-imp-slice" class="flex-1 py-1.5 rounded-xl border border-slate-600 bg-slate-800 text-xs font-bold hover:bg-slate-700">슬라이스</button>
+                    </div>
+                </div>
+
+                <button id="execute-shot-btn" onclick="executeShot()" class="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-2xl text-base shadow-lg shadow-emerald-900/40 transition flex items-center justify-center gap-2">
+                    <i data-lucide="play" class="w-5 h-5 fill-current"></i> 샷 실행 (SWING)
+                </button>
+            </div>
+
+            <!-- Game Live Scorecard -->
+            <div class="glass-panel p-4 rounded-3xl space-y-2">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-sm text-slate-200">현재 시뮬레이션 라운드 9홀 스코어</h3>
+                    <span id="game-total-score-badge" class="px-2.5 py-0.5 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-500/30 font-extrabold text-xs">Total: 0</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs sc-table">
+                        <thead>
+                            <tr class="bg-slate-800/80 text-slate-400">
+                                <th>홀</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>계</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="text-slate-300">
+                                <td class="font-bold text-slate-400">파</td>
+                                <td>4</td><td>4</td><td>3</td><td>5</td><td>4</td><td>3</td><td>4</td><td>5</td><td>4</td>
+                                <td class="font-bold text-emerald-400">36</td>
+                            </tr>
+                            <tr id="game-score-row" class="font-bold">
+                                <td class="text-slate-400">타수</td>
+                                <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
+                                <td class="text-amber-400">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button id="save-sim-to-game-records-btn" onclick="saveGameSimResult()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-amber-300 font-bold rounded-xl text-xs transition hidden flex items-center justify-center gap-1.5">
+                    <i data-lucide="trophy" class="w-4 h-4"></i> 이 시뮬레이션 게임 결과를 '게임 기록'에 저장하기
+                </button>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: PRACTICE FIELD STATS & ANALYTICS -->
+        <!-- ========================================== -->
+        <div id="tab-view-prac-stats" class="space-y-4 hidden">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-serif-custom font-bold text-slate-100 flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> 연습장 9홀 평균 & 핸디캡 분석
+                </h2>
+                <div class="flex gap-1.5">
+                    <button onclick="exportData()" class="px-2.5 py-1 bg-slate-800 border border-slate-600 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-700">백업</button>
+                    <button onclick="importDataPrompt()" class="px-2.5 py-1 bg-slate-800 border border-slate-600 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-700">복원</button>
+                    <input type="file" id="import-file-input" accept=".json" class="hidden" onchange="handleImportFile(event)">
+                </div>
+            </div>
+
+            <!-- Practice Summary Card -->
+            <div class="glass-panel p-4 rounded-3xl space-y-3 border-t-2 border-emerald-400">
+                <div class="grid grid-cols-3 text-center divide-x divide-slate-700">
+                    <div>
+                        <div class="text-[11px] text-slate-400 font-bold">전체 평균 타수</div>
+                        <div class="text-2xl font-bold font-serif-custom text-emerald-400 mt-0.5" id="prac-stat-avg-score">-</div>
+                    </div>
+                    <div>
+                        <div class="text-[11px] text-slate-400 font-bold">베스트 타수</div>
+                        <div class="text-2xl font-bold font-serif-custom text-amber-400 mt-0.5" id="prac-stat-best-score">-</div>
+                    </div>
+                    <div>
+                        <div class="text-[11px] text-slate-400 font-bold">연습 횟수</div>
+                        <div class="text-2xl font-bold font-serif-custom text-slate-200 mt-0.5" id="prac-stat-total-rounds">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent 10 Practice Rounds & Handicap Improvement Box -->
+            <div class="glass-panel p-4 rounded-3xl space-y-2" id="prac-stat-rec10-box"></div>
+
+            <!-- Detailed Metrics -->
+            <div class="glass-panel p-4 rounded-3xl space-y-2.5" id="prac-stat-metrics-box"></div>
+
+            <!-- Score Trend SVG Chart -->
+            <div class="glass-panel p-4 rounded-3xl space-y-2">
+                <h3 class="font-bold text-sm text-slate-200">연습장 최근 10회 스코어 추이</h3>
+                <div id="prac-stat-trend-chart"></div>
+            </div>
+
+            <!-- Saved Practice Rounds List -->
+            <div class="glass-panel p-4 rounded-3xl space-y-2">
+                <h3 class="font-bold text-sm text-slate-200">저장된 연습장 기록 목록</h3>
+                <div id="prac-stat-rounds-list" class="space-y-1.5 max-h-72 overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 4: 3D GAME RECORDS & LEADERBOARD -->
+        <!-- ========================================== -->
+        <div id="tab-view-game-stats" class="space-y-4 hidden">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-serif-custom font-bold text-slate-100 flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> 3D 감독 게임 전용 명예의 전당
+                </h2>
+            </div>
+
+            <!-- Game Summary Card -->
+            <div class="glass-panel p-4 rounded-3xl space-y-3 border-t-2 border-amber-400">
+                <div class="grid grid-cols-3 text-center divide-x divide-slate-700">
+                    <div>
+                        <div class="text-[11px] text-slate-400 font-bold">게임 평균 타수</div>
+                        <div class="text-2xl font-bold font-serif-custom text-amber-400 mt-0.5" id="game-stat-avg-score">-</div>
+                    </div>
+                    <div>
+                        <div class="text-[11px] text-slate-400 font-bold">최고 베스트</div>
+                        <div class="text-2xl font-bold font-serif-custom text-emerald-400 mt-0.5" id="game-stat-best-score">-</div>
+                    </div>
+                    <div>
+                        <div class="text-[11px] text-slate-400 font-bold">완료한 플레이</div>
+                        <div class="text-2xl font-bold font-serif-custom text-slate-200 mt-0.5" id="game-stat-total-count">0회</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Saved Game Records List -->
+            <div class="glass-panel p-4 rounded-3xl space-y-2">
+                <h3 class="font-bold text-sm text-slate-200">3D 감독 게임 라운드 히스토리</h3>
+                <div id="game-stat-list" class="space-y-1.5 max-h-80 overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Global App Logic & Simulation Core -->
+    <script>
+        // Data Structures & Storage Keys (Separated Practice & Game Records)
+        const PRAC_STORAGE_KEY = 'screengolf_practice_records';
+        const GAME_STORAGE_KEY = 'screengolf_game_records';
+        
+        let practiceRoundsData = [];
+        let gameRoundsData = [];
+        let editingPracticeId = null;
+
+        // Current Practice Field Input Form State
+        let inputForm = {
+            id: "",
+            date: new Date().toISOString().split('T')[0],
+            cc: "",
+            sys: "GDR (골프존)",
+            memo: "",
+            holes: Array.from({length: 9}, () => ({ par: 4, dist: "", score: 4, putt: 2, pen: 0, fw: "안착", gir: "O" }))
+        };
+        let activeHoleIdx = 0;
+
+        // ... existing 3D simulation setup code ...
+
+        function saveGameSimResult() {
+            if (!simState.scores.every(s => s !== null)) return;
+            const newGameRecord = {
+                id: "game_" + Date.now(),
+                date: new Date().toISOString().split('T')[0],
+                mode: "3D 감독 시뮬레이터",
+                totalScore: simState.scores.reduce((a,b)=>a+b, 0),
+                holes: simCourseHoles.map((h, idx) => ({
+                    par: h.par,
+                    dist: h.dist,
+                    score: simState.scores[idx]
+                }))
+            };
+
+            gameRoundsData.push(newGameRecord);
+            localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(gameRoundsData));
+            alert("3D 감독 시뮬레이션 경기 결과가 '게임 기록'에 저장되었습니다! 🏆");
+            switchMainTab('game-stats');
+        }
+
+        // ==========================================
+        // PRACTICE FIELD INPUT & SAVE LOGIC
+        // ==========================================
+        function resetInputForm() {
+            editingPracticeId = null;
+            document.getElementById('input-title').innerText = "연습장 9홀 기록 입력";
+            inputForm = {
+                id: "",
+                date: new Date().toISOString().split('T')[0],
+                cc: "",
+                sys: "GDR (골프존)",
+                memo: "",
+                holes: Array.from({length: 9}, () => ({ par: 4, dist: "", score: 4, putt: 2, pen: 0, fw: "안착", gir: "O" }))
+            };
+            activeHoleIdx = 0;
+            renderInputForm();
+        }
+
+        function renderInputForm() {
+            document.getElementById('input-date').value = inputForm.date;
+            document.getElementById('input-sys').value = inputForm.sys;
+            document.getElementById('input-cc').value = inputForm.cc;
+            document.getElementById('input-memo').value = inputForm.memo;
+
+            // Render Hole Chips
+            const container = document.getElementById('hole-chips-container');
+            container.innerHTML = inputForm.holes.map((h, i) => `
+                <button onclick="setActiveHole(${i})" class="flex-1 py-2 px-3 rounded-xl font-bold text-xs whitespace-nowrap transition border ${
+                    i === activeHoleIdx ? 'bg-emerald-600 text-white border-emerald-400 shadow-md' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                }">
+                    ${i + 1}번 홀 (${h.score}타)
+                </button>
+            `).join('');
+
+            renderActiveHoleCard();
+            updateInputSummary();
+        }
+
+        function setActiveHole(idx) {
+            activeHoleIdx = idx;
+            renderInputForm();
+        }
+
+        function renderActiveHoleCard() {
+            const h = inputForm.holes[activeHoleIdx];
+            document.getElementById('current-hole-header').innerText = `${activeHoleIdx + 1}번 홀 상세 (Par ${h.par})`;
+
+            [3, 4, 5].forEach(p => {
+                const btn = document.getElementById(`btn-par-${p}`);
+                if (btn) {
+                    btn.className = h.par === p ? "py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold border border-emerald-400" : "py-2 bg-slate-800 rounded-xl text-xs font-bold border border-slate-600 hover:bg-slate-700";
+                }
+            });
+
+            document.getElementById('input-hole-dist').value = h.dist || "";
+            document.getElementById('label-score').innerText = h.score;
+            document.getElementById('label-putt').innerText = h.putt;
+            document.getElementById('label-pen').innerText = h.pen;
+
+            const fwSec = document.getElementById('fw-sec');
+            if (h.par === 3) fwSec.classList.add('hidden');
+            else fwSec.classList.remove('hidden');
+
+            const fwMap = { '안착': 'btn-fw-good', '좌': 'btn-fw-left', '우': 'btn-fw-right' };
+            ['안착', '좌', '우'].forEach(type => {
+                const b = document.getElementById(fwMap[type]);
+                if (b) {
+                    b.className = h.fw === type ? "py-2 bg-emerald-600 text-white border border-emerald-400 rounded-xl" : "py-2 bg-slate-800 border border-slate-600 rounded-xl";
+                }
+            });
+
+            document.getElementById('btn-gir-on').className = h.gir === 'O' ? "py-2 bg-emerald-600 text-white border border-emerald-400 rounded-xl" : "py-2 bg-slate-800 border border-slate-600 rounded-xl";
+            document.getElementById('btn-gir-off').className = h.gir === 'X' ? "py-2 bg-rose-900/60 text-rose-200 border border-rose-500 rounded-xl" : "py-2 bg-slate-800 border border-slate-600 rounded-xl";
+
+            document.getElementById('btn-prev-hole').disabled = activeHoleIdx === 0;
+            document.getElementById('btn-next-hole').disabled = activeHoleIdx === 8;
+        }
+
+        function setHolePar(parVal) {
+            inputForm.holes[activeHoleIdx].par = parVal;
+            if (parVal === 3) inputForm.holes[activeHoleIdx].fw = "";
+            renderInputForm();
+        }
+
+        function updateHoleData(key, val) {
+            inputForm.holes[activeHoleIdx][key] = val;
+            updateInputSummary();
+        }
+
+        function stepHoleVal(key, delta) {
+            const h = inputForm.holes[activeHoleIdx];
+            let cur = parseInt(h[key]) || 0;
+            cur = Math.max(0, cur + delta);
+            h[key] = cur;
+            renderActiveHoleCard();
+            updateInputSummary();
+        }
+
+        function setHoleFW(type) {
+            inputForm.holes[activeHoleIdx].fw = type;
+            renderActiveHoleCard();
+        }
+
+        function setHoleGIR(girVal) {
+            inputForm.holes[activeHoleIdx].gir = girVal;
+            renderActiveHoleCard();
+        }
+
+        function navHole(delta) {
+            activeHoleIdx = Math.max(0, Math.min(8, activeHoleIdx + delta));
+            renderInputForm();
+        }
+
+        function updateInputSummary() {
+            let totalDist = 0, totalScore = 0, totalPar = 0;
+            inputForm.holes.forEach(h => {
+                totalDist += parseInt(h.dist) || 0;
+                totalScore += parseInt(h.score) || 0;
+                totalPar += parseInt(h.par) || 4;
+            });
+            const diff = totalScore - totalPar;
+            const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
+            document.getElementById('input-summary-text').innerText = `연습 합계: ${totalDist}m · 9홀 ${totalScore}타 (${diffStr})`;
+        }
+
+        function saveCurrentRound() {
+            inputForm.date = document.getElementById('input-date').value;
+            inputForm.sys = document.getElementById('input-sys').value;
+            inputForm.cc = document.getElementById('input-cc').value.trim();
+            inputForm.memo = document.getElementById('input-memo').value.trim();
+
+            if (!inputForm.id) {
+                inputForm.id = "prac_" + Date.now();
+                practiceRoundsData.push(JSON.parse(JSON.stringify(inputForm)));
+            } else {
+                const idx = practiceRoundsData.findIndex(r => r.id === inputForm.id);
+                if (idx >= 0) practiceRoundsData[idx] = JSON.parse(JSON.stringify(inputForm));
+            }
+
+            savePracticeRounds();
+            alert("연습장 9홀 기록이 저장되었습니다! 🎯");
+            resetInputForm();
+            switchMainTab('prac-stats');
+        }
+
+        // ==========================================
+        // STATS & RECORDS ANALYTICS FOR PRACTICE
+        // ==========================================
+        function renderPracticeStats() {
+            if (practiceRoundsData.length === 0) {
+                document.getElementById('prac-stat-avg-score').innerText = "-";
+                document.getElementById('prac-stat-best-score').innerText = "-";
+                document.getElementById('prac-stat-total-rounds').innerText = "0";
+                document.getElementById('prac-stat-rec10-box').innerHTML = `<div class="text-xs text-slate-400 text-center py-4">저장된 연습장 9홀 기록이 없습니다.</div>`;
+                return;
+            }
+
+            const scores = practiceRoundsData.map(r => r.holes.reduce((a,b)=>a+(parseInt(b.score)||0),0));
+            const avgScore = (scores.reduce((a,b)=>a+b,0) / scores.length).toFixed(1);
+            const bestScore = Math.min(...scores);
+
+            document.getElementById('prac-stat-avg-score').innerText = avgScore;
+            document.getElementById('prac-stat-best-score').innerText = bestScore;
+            document.getElementById('prac-stat-total-rounds').innerText = practiceRoundsData.length;
+
+            renderRecent10PracticeBox(scores);
+            renderDetailedPracticeMetrics();
+            renderPracticeScoreTrendChart(scores);
+            renderPracticeRoundsList();
+        }
+
+        function renderRecent10PracticeBox(scores) {
+            const count = Math.min(10, practiceRoundsData.length);
+            const recentScores = scores.slice(-count);
+            const avg10 = (recentScores.reduce((a,b)=>a+b,0) / count).toFixed(1);
+            const hcp = Math.max(0, ((avg10 - 36) * 0.96)).toFixed(1);
+
+            document.getElementById('prac-stat-rec10-box').innerHTML = `
+                <h3 class="font-bold text-sm text-slate-200">최근 ${count}회 연습장 평균 & 핸디캡</h3>
+                <div class="grid grid-cols-2 gap-2 text-xs pt-1">
+                    <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
+                        <span class="text-slate-400 block">최근 ${count}경기 연습 평균</span>
+                        <span class="text-lg font-bold text-emerald-400 font-serif-custom">${avg10} 타</span>
+                    </div>
+                    <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
+                        <span class="text-slate-400 block">연습장 추정 핸디캡</span>
+                        <span class="text-lg font-bold text-amber-400 font-serif-custom">+${hcp}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDetailedPracticeMetrics() {
+            let totalHoles = 0, totalPutts = 0, totalFWCount = 0, fwHits = 0, totalGIRCount = 0, girHits = 0;
+
+            practiceRoundsData.forEach(r => {
+                r.holes.forEach(h => {
+                    totalHoles++;
+                    totalPutts += parseInt(h.putt) || 0;
+                    if (h.par !== 3 && h.fw) {
+                        totalFWCount++;
+                        if (h.fw === '안착') fwHits++;
+                    }
+                    if (h.gir) {
+                        totalGIRCount++;
+                        if (h.gir === 'O') girHits++;
+                    }
+                });
+            });
+
+            const avgPutt = (totalPutts / totalHoles).toFixed(2);
+            const fwPct = totalFWCount ? Math.round((fwHits / totalFWCount) * 100) : 0;
+            const girPct = totalGIRCount ? Math.round((girHits / totalGIRCount) * 100) : 0;
+
+            document.getElementById('prac-stat-metrics-box').innerHTML = `
+                <h3 class="font-bold text-sm text-slate-200">연습장 상세 분석 지표</h3>
+                <div class="space-y-2 text-xs">
+                    <div class="flex justify-between items-center border-b border-slate-700/60 pb-1.5">
+                        <span class="text-slate-300">티샷 페어웨이 안착률 (FW Hit)</span>
+                        <span class="font-bold text-emerald-400">${fwPct}% (${fwHits}/${totalFWCount})</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-slate-700/60 pb-1.5">
+                        <span class="text-slate-300">그린 적중률 (GIR)</span>
+                        <span class="font-bold text-teal-400">${girPct}% (${girHits}/${totalGIRCount})</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-300">홀당 평균 퍼트 수</span>
+                        <span class="font-bold text-amber-400">${avgPutt} 퍼트</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPracticeScoreTrendChart(scores) {
+            const chartData = scores.slice(-10);
+            if (chartData.length < 2) {
+                document.getElementById('prac-stat-trend-chart').innerHTML = `<div class="text-xs text-slate-500 py-3 text-center">추이를 표시하려면 기록이 2개 이상 필요합니다.</div>`;
+                return;
+            }
+
+            const min = Math.min(...chartData) - 1;
+            const max = Math.max(...chartData) + 1;
+            const pts = chartData.map((v, i) => {
+                const x = 15 + i * (270 / (chartData.length - 1));
+                const y = 65 - ((v - min) / (max - min)) * 50;
+                return `${x},${y}`;
+            }).join(' ');
+
+            document.getElementById('prac-stat-trend-chart').innerHTML = `
+                <svg viewBox="0 0 300 85" class="w-full h-auto">
+                    <polyline points="${pts}" fill="none" stroke="#10b981" stroke-width="2.5" />
+                    ${chartData.map((v, i) => {
+                        const x = 15 + i * (270 / (chartData.length - 1));
+                        const y = 65 - ((v - min) / (max - min)) * 50;
+                        return `
+                            <circle cx="${x}" cy="${y}" r="4" fill="#fbbf24" />
+                            <text x="${x}" y="${y - 8}" font-size="9" font-weight="bold" fill="#cbd5e1" text-anchor="middle">${v}</text>
+                        `;
+                    }).join('')}
+                </svg>
+            `;
+        }
+
+        function renderPracticeRoundsList() {
+            const container = document.getElementById('prac-stat-rounds-list');
+            container.innerHTML = practiceRoundsData.slice().reverse().map(r => {
+                const total = r.holes.reduce((a,b)=>a+(parseInt(b.score)||0),0);
+                return `
+                    <div onclick="editPracticeRound('${r.id}')" class="p-3 bg-slate-800/70 hover:bg-slate-800 rounded-xl border border-slate-700/80 flex justify-between items-center cursor-pointer transition">
+                        <div>
+                            <div class="text-xs font-bold text-slate-200">${r.date} · ${r.cc || '코스 미입력'}</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5">${r.sys} · ${r.memo || '노트 없음'}</div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-base font-bold text-emerald-400 font-serif-custom">${total}타</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderGameStats() {
+            if (gameRoundsData.length === 0) {
+                document.getElementById('game-stat-avg-score').innerText = "-";
+                document.getElementById('game-stat-best-score').innerText = "-";
+                document.getElementById('game-stat-total-count').innerText = "0회";
+                document.getElementById('game-stat-list').innerHTML = `<div class="text-xs text-slate-400 text-center py-4">플레이한 3D 감독 게임 기록이 없습니다.</div>`;
+                return;
+            }
+
+            const scores = gameRoundsData.map(g => g.totalScore);
+            const avg = (scores.reduce((a,b)=>a+b,0) / scores.length).toFixed(1);
+            const best = Math.min(...scores);
+
+            document.getElementById('game-stat-avg-score').innerText = avg;
+            document.getElementById('game-stat-best-score').innerText = best;
+            document.getElementById('game-stat-total-count').innerText = `${gameRoundsData.length}회`;
+
+            document.getElementById('game-stat-list').innerHTML = gameRoundsData.slice().reverse().map(g => `
+                <div class="p-3 bg-slate-800/70 rounded-xl border border-slate-700/80 flex justify-between items-center">
+                    <div>
+                        <div class="text-xs font-bold text-amber-300">${g.date} · 3D 감독 모드</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5">9홀 플레이 완주</div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-base font-bold text-amber-400 font-serif-custom">${g.totalScore}타</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function editPracticeRound(id) {
+            const r = practiceRoundsData.find(x => x.id === id);
+            if (!r) return;
+            editingPracticeId = id;
+            inputForm = JSON.parse(JSON.stringify(r));
+            document.getElementById('input-title').innerText = "연습장 라운드 기록 수정";
+            switchMainTab('practice');
+        }
+
+        // Storage Management
+        function savePracticeRounds() {
+            localStorage.setItem(PRAC_STORAGE_KEY, JSON.stringify(practiceRoundsData));
+        }
+
+        function loadAllStorageData() {
+            try {
+                const pData = localStorage.getItem(PRAC_STORAGE_KEY);
+                if (pData) practiceRoundsData = JSON.parse(pData);
+
+                const gData = localStorage.getItem(GAME_STORAGE_KEY);
+                if (gData) gameRoundsData = JSON.parse(gData);
+            } catch(e) {}
+        }
+
+        // Global Navigation 4-Tab Switcher
+        function switchMainTab(tab) {
+            document.getElementById('tab-view-practice').classList.add('hidden');
+            document.getElementById('tab-view-game').classList.add('hidden');
+            document.getElementById('tab-view-prac-stats').classList.add('hidden');
+            document.getElementById('tab-view-game-stats').classList.add('hidden');
+
+            const inactiveStyle = "py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center justify-center gap-1 font-bold";
+            const activeStyle = "py-1.5 rounded-lg bg-emerald-600 text-white shadow-md transition flex items-center justify-center gap-1 font-bold";
+
+            document.getElementById('nav-btn-practice').className = inactiveStyle;
+            document.getElementById('nav-btn-game').className = inactiveStyle;
+            document.getElementById('nav-btn-prac-stats').className = inactiveStyle;
+            document.getElementById('nav-btn-game-stats').className = inactiveStyle;
+
+            if (tab === 'practice') {
+                document.getElementById('tab-view-practice').classList.remove('hidden');
+                document.getElementById('nav-btn-practice').className = activeStyle;
+                renderInputForm();
+            } else if (tab === 'game') {
+                document.getElementById('tab-view-game').classList.remove('hidden');
+                document.getElementById('nav-btn-game').className = activeStyle;
+            } else if (tab === 'prac-stats') {
+                document.getElementById('tab-view-prac-stats').classList.remove('hidden');
+                document.getElementById('nav-btn-prac-stats').className = activeStyle;
+                renderPracticeStats();
+            } else if (tab === 'game-stats') {
+                document.getElementById('tab-view-game-stats').classList.remove('hidden');
+                document.getElementById('nav-btn-game-stats').className = activeStyle;
+                renderGameStats();
+            }
+        }
+
+        window.onload = () => {
+            lucide.createIcons();
+            loadAllStorageData();
+            init3DSimulation();
+            renderInputForm();
+            renderGameScoreboard();
+        };
+    </script>
+</body>
+</html>
