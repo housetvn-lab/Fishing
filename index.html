@@ -89,6 +89,120 @@
     <main class="max-w-md mx-auto w-full flex-1 p-3 pb-24">
 
         <!-- ========================================== -->
+        <!-- TAB 1: PRACTICE FIELD INPUT FORM -->
+        <!-- ========================================== -->
+        <div id="tab-view-practice" class="space-y-3">
+            <div class="flex justify-between items-center">
+                <h2 id="input-title" class="text-base font-serif-custom font-bold text-emerald-400">연습장 9홀 기록 입력</h2>
+                <button onclick="resetInputForm()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-bold rounded-lg border border-slate-700">새 입력</button>
+            </div>
+
+            <!-- Round General Info Card -->
+            <div class="glass-panel p-3.5 rounded-2xl space-y-2 text-xs">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-slate-400 font-bold mb-1 block">날짜</label>
+                        <input type="date" id="input-date" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white font-bold outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="text-slate-400 font-bold mb-1 block">시스템</label>
+                        <select id="input-sys" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white font-bold outline-none focus:border-emerald-500">
+                            <option>GDR (골프존)</option>
+                            <option>카카오VX</option>
+                            <option>SG골프</option>
+                            <option>기타 연습장</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-slate-400 font-bold mb-1 block">CC (코스명)</label>
+                    <input type="text" id="input-cc" placeholder="예: 아난티 남해 CC" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white font-bold outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <!-- Hole Selector Chips -->
+            <div id="hole-chips-container" class="flex gap-1 overflow-x-auto pb-1 no-scrollbar"></div>
+
+            <!-- Active Hole Input Card -->
+            <div class="glass-panel p-4 rounded-3xl space-y-3">
+                <h3 id="current-hole-header" class="text-sm font-bold text-amber-300 border-b border-slate-700/60 pb-2">1번 홀 상세 (Par 4)</h3>
+                
+                <div>
+                    <label class="text-[11px] text-slate-400 font-bold mb-1 block">파 (PAR)</label>
+                    <div class="grid grid-cols-3 gap-1.5">
+                        <button id="btn-par-3" onclick="setHolePar(3)" class="py-2 bg-slate-800 rounded-xl text-xs font-bold border border-slate-600 hover:bg-slate-700">파 3</button>
+                        <button id="btn-par-4" onclick="setHolePar(4)" class="py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold border border-emerald-400">파 4</button>
+                        <button id="btn-par-5" onclick="setHolePar(5)" class="py-2 bg-slate-800 rounded-xl text-xs font-bold border border-slate-600 hover:bg-slate-700">파 5</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[11px] text-slate-400 font-bold mb-1 block">거리 (m)</label>
+                    <input type="number" id="input-hole-dist" oninput="updateHoleData('dist', this.value)" placeholder="예: 360" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs font-bold text-white outline-none focus:border-emerald-500">
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div>
+                        <div class="text-[11px] text-slate-400 font-bold mb-1">타수</div>
+                        <div class="flex items-center justify-between bg-slate-800 border border-slate-700 rounded-xl p-1">
+                            <button onclick="stepHoleVal('score', -1)" class="w-7 h-7 bg-slate-700 rounded-lg font-bold text-sm">-</button>
+                            <span id="label-score" class="font-serif-custom font-bold text-base text-emerald-400">4</span>
+                            <button onclick="stepHoleVal('score', 1)" class="w-7 h-7 bg-slate-700 rounded-lg font-bold text-sm">+</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-[11px] text-slate-400 font-bold mb-1">퍼트</div>
+                        <div class="flex items-center justify-between bg-slate-800 border border-slate-700 rounded-xl p-1">
+                            <button onclick="stepHoleVal('putt', -1)" class="w-7 h-7 bg-slate-700 rounded-lg font-bold text-sm">-</button>
+                            <span id="label-putt" class="font-serif-custom font-bold text-base text-amber-400">2</span>
+                            <button onclick="stepHoleVal('putt', 1)" class="w-7 h-7 bg-slate-700 rounded-lg font-bold text-sm">+</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-[11px] text-slate-400 font-bold mb-1">벌타</div>
+                        <div class="flex items-center justify-between bg-slate-800 border border-slate-700 rounded-xl p-1">
+                            <button onclick="stepHoleVal('pen', -1)" class="w-7 h-7 bg-slate-700 rounded-lg font-bold text-sm">-</button>
+                            <span id="label-pen" class="font-serif-custom font-bold text-base text-rose-400">0</span>
+                            <button onclick="stepHoleVal('pen', 1)" class="w-7 h-7 bg-slate-700 rounded-lg font-bold text-sm">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="fw-sec">
+                    <label class="text-[11px] text-slate-400 font-bold mb-1 block">티샷 페어웨이</label>
+                    <div class="grid grid-cols-3 gap-1.5 text-xs font-bold">
+                        <button id="btn-fw-good" onclick="setHoleFW('안착')" class="py-2 bg-emerald-600 text-white border border-emerald-400 rounded-xl">페어웨이 안착</button>
+                        <button id="btn-fw-left" onclick="setHoleFW('좌')" class="py-2 bg-slate-800 border border-slate-600 rounded-xl">좌측 미스</button>
+                        <button id="btn-fw-right" onclick="setHoleFW('우')" class="py-2 bg-slate-800 border border-slate-600 rounded-xl">우측 미스</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[11px] text-slate-400 font-bold mb-1 block">그린 적중 (GIR)</label>
+                    <div class="grid grid-cols-2 gap-1.5 text-xs font-bold">
+                        <button id="btn-gir-on" onclick="setHoleGIR('O')" class="py-2 bg-emerald-600 text-white border border-emerald-400 rounded-xl">O (적중)</button>
+                        <button id="btn-gir-off" onclick="setHoleGIR('X')" class="py-2 bg-slate-800 border border-slate-600 rounded-xl">X (실패)</button>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button id="btn-prev-hole" onclick="navHole(-1)" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-xl border border-slate-700">이전 홀</button>
+                    <button id="btn-next-hole" onclick="navHole(1)" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-xl border border-slate-700">다음 홀</button>
+                </div>
+            </div>
+
+            <!-- Memo & Save Section -->
+            <div class="glass-panel p-3.5 rounded-2xl space-y-2">
+                <div id="input-summary-text" class="text-xs font-bold text-emerald-400">연습 합계: 0m · 9홀 36타 (+0)</div>
+                <textarea id="input-memo" placeholder="오늘 연습장 복기 노트 (잘된 부분, 드라이버 타점 등)" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs font-semibold text-white outline-none h-16 resize-none focus:border-emerald-500"></textarea>
+            </div>
+
+            <button onclick="saveCurrentRound()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-sm shadow-lg shadow-emerald-900/40 transition">
+                연습장 9홀 기록 저장하기
+            </button>
+        </div>
+
+        <!-- ========================================== -->
         <!-- TAB 2: 2D MANAGER SIMULATOR GAME -->
         <!-- ========================================== -->
         <div id="tab-view-game" class="space-y-3 hidden">
@@ -207,128 +321,6 @@
                 </div>
                 <button id="save-sim-to-game-records-btn" onclick="saveGameSimResult()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-amber-300 font-bold rounded-xl text-xs transition hidden flex items-center justify-center gap-1.5">
                     <i data-lucide="trophy" class="w-4 h-4"></i> 이 게임 결과를 '게임 기록'에 저장하기
-                </button>
-            </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- TAB 2: 3D MANAGER SIMULATOR GAME -->
-        <!-- ========================================== -->
-        <div id="tab-view-game" class="space-y-3 hidden">
-            <!-- Game Canvas & Overlay Screen -->
-            <div class="relative w-full h-[360px] bg-slate-900 rounded-3xl overflow-hidden border border-slate-700 shadow-2xl">
-                <div id="canvas-container" class="w-full h-full"></div>
-
-                <div class="absolute top-3 left-3 right-3 flex justify-between items-center pointer-events-none z-10">
-                    <div class="glass-panel px-3 py-1.5 rounded-xl text-xs flex items-center gap-2 border border-emerald-500/30">
-                        <i data-lucide="wind" class="w-4 h-4 text-emerald-400"></i>
-                        <span>바람 <b id="hud-wind-dir" class="text-emerald-300">북서</b> <b id="hud-wind-speed" class="text-amber-400">3.2m/s</b></span>
-                    </div>
-                    <div class="glass-panel px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 border border-emerald-500/30">
-                        <i data-lucide="compass" class="w-4 h-4 text-teal-400"></i>
-                        <span id="hud-hole-info" class="font-bold text-emerald-300">HOLE 1 (PAR 4)</span>
-                    </div>
-                </div>
-
-                <div class="absolute bottom-3 left-3 right-3 flex justify-between items-end pointer-events-none z-10">
-                    <div class="glass-panel p-2.5 rounded-2xl text-xs space-y-0.5 border border-slate-600/50">
-                        <div class="text-[10px] text-slate-400">남은 거리</div>
-                        <div class="text-2xl font-bold font-serif-custom text-emerald-400" id="hud-remain-dist">380 m</div>
-                        <div class="text-[10px] text-slate-300" id="hud-lie-status">위치: 티샷 브라켓</div>
-                    </div>
-
-                    <div id="shot-status-msg" class="glass-panel px-3 py-1.5 rounded-xl text-xs font-bold text-amber-300 hidden border border-amber-500/40 animate-pulse">
-                        공 날아가는 중...
-                    </div>
-                </div>
-            </div>
-
-            <!-- Manager Controls Panel -->
-            <div id="game-controls-panel" class="glass-panel p-4 rounded-3xl space-y-3">
-                <div class="flex justify-between items-center text-xs font-bold border-b border-slate-700/60 pb-2">
-                    <span class="text-emerald-400 flex items-center gap-1">
-                        <i data-lucide="sliders" class="w-4 h-4"></i> 감독 샷 지시
-                    </span>
-                    <span id="game-shot-count" class="text-slate-400">1번째 샷 (파 4)</span>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-[11px] font-semibold text-slate-400 mb-1 block">클럽 선택</label>
-                        <select id="club-select" onchange="updateClubRecommendation()" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-2.5 py-2 text-xs font-bold text-white outline-none focus:border-emerald-500">
-                            <option value="1W">1W 드라이버 (230m)</option>
-                            <option value="3W">3W 우드 (200m)</option>
-                            <option value="5I">5번 아이언 (160m)</option>
-                            <option value="7I" selected>7번 아이언 (140m)</option>
-                            <option value="PW">PW 피칭웨지 (110m)</option>
-                            <option value="SW">SW 샌드웨지 (80m)</option>
-                            <option value="PT">퍼터 Putter (그린)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[11px] font-semibold text-slate-400 mb-1 block">조준 방향 (좌/우 도)</label>
-                        <div class="flex items-center gap-1">
-                            <button onclick="adjustAim(-3)" class="bg-slate-700 hover:bg-slate-600 px-2 py-1.5 rounded-lg text-xs font-bold">-3°</button>
-                            <span id="aim-angle-label" class="flex-1 text-center font-bold text-xs text-amber-400">0° (직진)</span>
-                            <button onclick="adjustAim(3)" class="bg-slate-700 hover:bg-slate-600 px-2 py-1.5 rounded-lg text-xs font-bold">+3°</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-1.5">
-                    <div class="flex justify-between text-xs font-semibold">
-                        <span class="text-slate-400">샷 파워 (세기)</span>
-                        <span id="power-val-label" class="text-emerald-400 font-bold">90%</span>
-                    </div>
-                    <input type="range" id="power-range" min="10" max="100" value="90" oninput="document.getElementById('power-val-label').innerText = this.value + '%'" class="w-full accent-emerald-500 bg-slate-700 rounded-lg h-2 cursor-pointer">
-                </div>
-
-                <div class="space-y-1.5">
-                    <div class="flex justify-between text-xs font-semibold">
-                        <span class="text-slate-400">임팩트 정밀도 (슬라이스/후크)</span>
-                        <span id="impact-val-label" class="text-amber-400 font-bold">정확 (Center)</span>
-                    </div>
-                    <div class="flex gap-1.5">
-                        <button onclick="setImpact('hook')" id="btn-imp-hook" class="flex-1 py-1.5 rounded-xl border border-slate-600 bg-slate-800 text-xs font-bold hover:bg-slate-700">후크 (Hook)</button>
-                        <button onclick="setImpact('center')" id="btn-imp-center" class="flex-1 py-1.5 rounded-xl border border-emerald-500 bg-emerald-900/40 text-emerald-300 text-xs font-bold">정중앙 (Center)</button>
-                        <button onclick="setImpact('slice')" id="btn-imp-slice" class="flex-1 py-1.5 rounded-xl border border-slate-600 bg-slate-800 text-xs font-bold hover:bg-slate-700">슬라이스</button>
-                    </div>
-                </div>
-
-                <button id="execute-shot-btn" onclick="executeShot()" class="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-2xl text-base shadow-lg shadow-emerald-900/40 transition flex items-center justify-center gap-2">
-                    <i data-lucide="play" class="w-5 h-5 fill-current"></i> 샷 실행 (SWING)
-                </button>
-            </div>
-
-            <!-- Game Live Scorecard -->
-            <div class="glass-panel p-4 rounded-3xl space-y-2">
-                <div class="flex justify-between items-center">
-                    <h3 class="font-bold text-sm text-slate-200">현재 시뮬레이션 라운드 9홀 스코어</h3>
-                    <span id="game-total-score-badge" class="px-2.5 py-0.5 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-500/30 font-extrabold text-xs">Total: 0</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs sc-table">
-                        <thead>
-                            <tr class="bg-slate-800/80 text-slate-400">
-                                <th>홀</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>계</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="text-slate-300">
-                                <td class="font-bold text-slate-400">파</td>
-                                <td>4</td><td>4</td><td>3</td><td>5</td><td>4</td><td>3</td><td>4</td><td>5</td><td>4</td>
-                                <td class="font-bold text-emerald-400">36</td>
-                            </tr>
-                            <tr id="game-score-row" class="font-bold">
-                                <td class="text-slate-400">타수</td>
-                                <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
-                                <td class="text-amber-400">-</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <button id="save-sim-to-game-records-btn" onclick="saveGameSimResult()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-amber-300 font-bold rounded-xl text-xs transition hidden flex items-center justify-center gap-1.5">
-                    <i data-lucide="trophy" class="w-4 h-4"></i> 이 시뮬레이션 게임 결과를 '게임 기록'에 저장하기
                 </button>
             </div>
         </div>
