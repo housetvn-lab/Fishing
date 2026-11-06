@@ -477,11 +477,17 @@
             if (!canvas) return;
             ctx = canvas.getContext('2d');
 
-            const container = canvas.parentElement;
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
-
+            resizeCanvas();
             setupHole(0);
+        }
+
+        function resizeCanvas() {
+            if (!canvas) return;
+            const container = canvas.parentElement;
+            if (container && container.clientWidth > 0 && container.clientHeight > 0) {
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+            }
         }
 
         function setupHole(holeIdx) {
@@ -490,8 +496,10 @@
             const dist = simCourseHoles[holeIdx].dist;
             simState.remainDist = dist;
 
+            resizeCanvas();
+
             // Start Ball Position (Bottom center Tee Box)
-            currentBallPos = { x: canvas.width / 2, y: canvas.height - 45 };
+            currentBallPos = { x: (canvas.width || 320) / 2, y: (canvas.height || 380) - 45 };
             targetBallPos = { ...currentBallPos };
             shotTrajectory = [ { ...currentBallPos } ];
 
@@ -1123,6 +1131,10 @@
             } else if (tab === 'game') {
                 document.getElementById('tab-view-game').classList.remove('hidden');
                 document.getElementById('nav-btn-game').className = activeStyle;
+                setTimeout(() => {
+                    resizeCanvas();
+                    renderCourseCanvas();
+                }, 50);
             } else if (tab === 'prac-stats') {
                 document.getElementById('tab-view-prac-stats').classList.remove('hidden');
                 document.getElementById('nav-btn-prac-stats').className = activeStyle;
