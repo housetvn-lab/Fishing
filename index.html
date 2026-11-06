@@ -469,7 +469,7 @@
             if (targetTab === 'game') {
                 setTimeout(() => {
                     init2DCourseSim();
-                }, 50);
+                }, 100);
             } else if (targetTab === 'prac-stats') {
                 renderPracticeStats();
             } else if (targetTab === 'game-stats') {
@@ -533,6 +533,51 @@
 
             resizeCanvas();
             setupHole(simState.currentHoleIdx || 0);
+
+            // Re-render canvas on window resize
+            window.removeEventListener('resize', resizeCanvas);
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                renderCourseCanvas();
+            });
+        }
+
+        function resizeCanvas() {
+            if (!canvas) return;
+            const container = canvas.parentElement;
+            if (container) {
+                canvas.width = container.clientWidth || 360;
+                canvas.height = container.clientHeight || 380;
+            }
+        }
+
+        function setupHole(holeIdx) {
+            simState.currentHoleIdx = holeIdx;
+            simState.shotCount = 0;
+            const dist = simCourseHoles[holeIdx].dist;
+            simState.remainDist = dist;
+
+            resizeCanvas();
+
+            // Start Ball Position (Bottom center Tee Box)
+            currentBallPos = { x: (canvas.width || 360) / 2, y: (canvas.height || 380) - 45, z: 0 };
+            targetBallPos = { ...currentBallPos };
+            shotTrajectory = [ { x: currentBallPos.x, y: currentBallPos.y, z: 0 } ];
+
+            // Randomize wind
+            const winds = ["북서풍", "남동풍", "맞바람", "뒷바람", "좌측풍"];
+            simState.windDirText = winds[Math.floor(Math.random() * winds.length)];
+            simState.windSpeed = (Math.random() * 4 + 1).toFixed(1);
+
+            aimAngleDeg = 0;
+            updateAimDisplay();
+            updateClubRecommendation();
+            renderCourseCanvas();
+            updateHUDInfo();
+            renderGameScoreboard();
+
+            const saveBtn = document.getElementById('save-sim-to-game-records-btn');
+            if (saveBtn) saveBtn.classList.add('hidden');
         }
 
         function resizeCanvas() {
@@ -811,8 +856,10 @@
             isShotInProgress = true;
             simState.shotCount++;
 
-            document.getElementById('shot-status-msg').classList.remove('hidden');
-            document.getElementById('execute-shot-btn').disabled = true;
+            const statusMsg = document.getElementById('shot-status-msg');
+            const swingBtn = document.getElementById('execute-shot-btn');
+            if (statusMsg) statusMsg.classList.remove('hidden');
+            if (swingBtn) swingBtn.disabled = true;
 
             const club = document.getElementById('club-select').value;
             const inputDist = parseFloat(document.getElementById('target-dist-input').value);
@@ -833,7 +880,8 @@
 
             targetBallPos = {
                 x: currentBallPos.x + Math.sin(aimRad) * pyDistance + sideMiss,
-                y: Math.max(canvas.height * 0.16, currentBallPos.y - Math.cos(aimRad) * pyDistance)
+                y: Math.max(canvas.height * 0.16, currentBallPos.y - Math.cos(aimRad) * pyDistance),
+                z: 0
             };
 
             // Height Arc Apex based on club
@@ -876,8 +924,10 @@
 
         function finishShotExecution(shotMeters) {
             isShotInProgress = false;
-            document.getElementById('shot-status-msg').classList.add('hidden');
-            document.getElementById('execute-shot-btn').disabled = false;
+            const statusMsg = document.getElementById('shot-status-msg');
+            const swingBtn = document.getElementById('execute-shot-btn');
+            if (statusMsg) statusMsg.classList.add('hidden');
+            if (swingBtn) swingBtn.disabled = false;
 
             simState.remainDist = Math.max(0, simState.remainDist - shotMeters);
             updateHUDInfo();
@@ -895,7 +945,8 @@
                     }, 300);
                 } else {
                     alert(`🎉 9홀 감독 시뮬레이션 완주!\n총 타수: ${simState.scores.reduce((a,b)=>a+b, 0)}타`);
-                    document.getElementById('save-sim-to-game-records-btn').classList.remove('hidden');
+                    const saveBtn = document.getElementById('save-sim-to-game-records-btn');
+                    if (saveBtn) saveBtn.classList.remove('hidden');
                 }
             } else {
                 updateClubRecommendation();
