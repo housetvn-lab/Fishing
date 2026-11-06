@@ -206,7 +206,7 @@
         <!-- TAB 2: 2D MANAGER SIMULATOR GAME -->
         <!-- ========================================== -->
         <div id="tab-view-game" class="space-y-3 hidden">
-            <!-- 2D Canvas Course Field Overlay Screen -->
+            <!-- 3D Graphic Simulator Screen -->
             <div class="relative w-full h-[380px] bg-slate-900 rounded-3xl overflow-hidden border border-slate-700 shadow-2xl">
                 <canvas id="course-canvas" class="w-full h-full"></canvas>
 
@@ -231,7 +231,7 @@
                     </div>
 
                     <div id="shot-status-msg" class="glass-panel px-3 py-1.5 rounded-xl text-xs font-bold text-amber-300 hidden border border-amber-500/40 animate-pulse">
-                        공 날아가는 중...
+                        3D 샷 비행 계산 중...
                     </div>
                 </div>
             </div>
@@ -240,7 +240,7 @@
             <div id="game-controls-panel" class="glass-panel p-4 rounded-3xl space-y-3">
                 <div class="flex justify-between items-center text-xs font-bold border-b border-slate-700/60 pb-2">
                     <span class="text-emerald-400 flex items-center gap-1">
-                        <i data-lucide="sliders" class="w-4 h-4"></i> 감독 샷 및 클럽 조준 지시
+                        <i data-lucide="sliders" class="w-4 h-4"></i> 감독 정밀 샷 & 거리 지시
                     </span>
                     <span id="game-shot-count" class="text-slate-400">1번째 샷 (파 4)</span>
                 </div>
@@ -248,42 +248,53 @@
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="text-[11px] font-semibold text-slate-400 mb-1 block">클럽 선택</label>
-                        <select id="club-select" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-2.5 py-2 text-xs font-bold text-white outline-none focus:border-emerald-500">
+                        <select id="club-select" onchange="onClubSelectChange()" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-2.5 py-2 text-xs font-bold text-white outline-none focus:border-emerald-500">
                             <option value="1W">1W 드라이버 (230m)</option>
-                            <option value="3W">3W 우드 (200m)</option>
-                            <option value="5I">5번 아이언 (160m)</option>
-                            <option value="7I" selected>7번 아이언 (140m)</option>
+                            <option value="5W">5W 우드 (200m)</option>
+                            <option value="4UT">4U 유틸리티 (180m)</option>
+                            <option value="5I">5번 아이언 (170m)</option>
+                            <option value="6I">6번 아이언 (160m)</option>
+                            <option value="7I" selected>7번 아이언 (150m)</option>
+                            <option value="8I">8번 아이언 (140m)</option>
+                            <option value="9I">9번 아이언 (130m)</option>
                             <option value="PW">PW 피칭웨지 (110m)</option>
-                            <option value="SW">SW 샌드웨지 (80m)</option>
-                            <option value="PT">퍼터 Putter (그린)</option>
+                            <option value="AW50">50도 웨지 (90m)</option>
+                            <option value="SW56">56도 웨지 (70m)</option>
+                            <option value="PT">PT 퍼터 (그린)</option>
                         </select>
                     </div>
                     <div>
-                        <label class="text-[11px] font-semibold text-slate-400 mb-1 block">조준 방향</label>
+                        <label class="text-[11px] font-semibold text-slate-400 mb-1 block">목표 비거리 지정 (m)</label>
+                        <input type="number" id="target-dist-input" oninput="onTargetDistInput()" placeholder="150" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-2.5 py-1.5 text-xs font-bold text-amber-300 outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[11px] font-semibold text-slate-400 mb-1 block">조준 방향 (에이밍)</label>
                         <div class="flex items-center gap-1">
-                            <button onclick="adjustAim(-3)" class="bg-slate-700 hover:bg-slate-600 px-2 py-1.5 rounded-lg text-xs font-bold">-3°</button>
+                            <button onclick="adjustAim(-2)" class="bg-slate-700 hover:bg-slate-600 px-2 py-1.5 rounded-lg text-xs font-bold">-2°</button>
                             <span id="aim-angle-label" class="flex-1 text-center font-bold text-xs text-amber-400">0° (직진)</span>
-                            <button onclick="adjustAim(3)" class="bg-slate-700 hover:bg-slate-600 px-2 py-1.5 rounded-lg text-xs font-bold">+3°</button>
+                            <button onclick="adjustAim(2)" class="bg-slate-700 hover:bg-slate-600 px-2 py-1.5 rounded-lg text-xs font-bold">+2°</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-semibold text-slate-400 mb-1 block">샷 파워 (세기)</label>
+                        <div class="flex items-center gap-2">
+                            <input type="range" id="power-range" min="10" max="100" value="100" oninput="onPowerRangeInput()" class="w-full accent-emerald-500 bg-slate-700 rounded-lg h-2 cursor-pointer">
+                            <span id="power-val-label" class="text-emerald-400 font-bold text-xs min-w-[36px]">100%</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="space-y-1.5">
                     <div class="flex justify-between text-xs font-semibold">
-                        <span class="text-slate-400">샷 파워 (세기)</span>
-                        <span id="power-val-label" class="text-emerald-400 font-bold">90%</span>
-                    </div>
-                    <input type="range" id="power-range" min="10" max="100" value="90" oninput="document.getElementById('power-val-label').innerText = this.value + '%'" class="w-full accent-emerald-500 bg-slate-700 rounded-lg h-2 cursor-pointer">
-                </div>
-
-                <div class="space-y-1.5">
-                    <div class="flex justify-between text-xs font-semibold">
-                        <span class="text-slate-400">구질 선택 (슬라이스/후크)</span>
+                        <span class="text-slate-400">구질 & 탄도 컨트롤</span>
                     </div>
                     <div class="flex gap-1.5">
-                        <button onclick="setImpact('hook')" id="btn-imp-hook" class="flex-1 py-1.5 rounded-xl border border-slate-600 bg-slate-800 text-xs font-bold hover:bg-slate-700">후크 (Left)</button>
+                        <button onclick="setImpact('hook')" id="btn-imp-hook" class="flex-1 py-1.5 rounded-xl border border-slate-600 bg-slate-800 text-xs font-bold hover:bg-slate-700">후크 (Hook)</button>
                         <button onclick="setImpact('center')" id="btn-imp-center" class="flex-1 py-1.5 rounded-xl border border-emerald-500 bg-emerald-900/40 text-emerald-300 text-xs font-bold">정중앙 (Straight)</button>
-                        <button onclick="setImpact('slice')" id="btn-imp-slice" class="flex-1 py-1.5 rounded-xl border border-slate-600 bg-slate-800 text-xs font-bold hover:bg-slate-700">슬라이스 (Right)</button>
+                        <button onclick="setImpact('slice')" id="btn-imp-slice" class="flex-1 py-1.5 rounded-xl border border-slate-600 bg-slate-800 text-xs font-bold hover:bg-slate-700">슬라이스 (Slice)</button>
                     </div>
                 </div>
 
@@ -435,16 +446,16 @@
         };
         let activeHoleIdx = 0;
 
-        // 2D Field Canvas Variables
+        // 2D/3D Field Canvas Variables
         let canvas, ctx;
         let isShotInProgress = false;
-        let animFrameId = null;
         let currentBallPos = { x: 0, y: 0 };
         let targetBallPos = { x: 0, y: 0 };
         let shotTrajectory = [];
         let animProgress = 0;
         let aimAngleDeg = 0;
         let selectedImpact = 'center';
+        let currentMaxApexHeight = 40;
 
         const simCourseHoles = [
             { par: 4, dist: 360, greenSlope: "보통 (좌 ➔ 우 흐름)" },
@@ -468,8 +479,20 @@
             windVector: { x: -1.2, y: -2.5 }
         };
 
+        // User Specified Exact Club Distance Table
         const clubDistances = {
-            '1W': 230, '3W': 200, '5I': 160, '7I': 140, 'PW': 110, 'SW': 80, 'PT': 15
+            '1W': 230,
+            '5W': 200,
+            '4UT': 180,
+            '5I': 170,
+            '6I': 160,
+            '7I': 150,
+            '8I': 140,
+            '9I': 130,
+            'PW': 110,
+            'AW50': 90,
+            'SW56': 70,
+            'PT': 15
         };
 
         function init2DCourseSim() {
@@ -501,7 +524,7 @@
             // Start Ball Position (Bottom center Tee Box)
             currentBallPos = { x: (canvas.width || 320) / 2, y: (canvas.height || 380) - 45 };
             targetBallPos = { ...currentBallPos };
-            shotTrajectory = [ { ...currentBallPos } ];
+            shotTrajectory = [ { x: currentBallPos.x, y: currentBallPos.y, z: 0 } ];
 
             // Randomize wind
             const winds = ["북서풍", "남동풍", "맞바람", "뒷바람", "좌측풍"];
@@ -522,83 +545,132 @@
             const w = canvas.width;
             const h = canvas.height;
 
-            // 1. Background Rough / Fairway
-            ctx.fillStyle = '#14532d'; // Dark Green Rough
+            // 1. Background Rough / Fairway Gradient (Perspective Feel)
+            const bgGradient = ctx.createLinearGradient(0, 0, 0, h);
+            bgGradient.addColorStop(0, '#064e3b'); // Dark Forest Green Near Green
+            bgGradient.addColorStop(1, '#14532d'); // Deep Fairway
+            ctx.fillStyle = bgGradient;
             ctx.fillRect(0, 0, w, h);
 
-            // Fairway Lane Shape
+            // Fairway Lane Perspective Shape
             ctx.fillStyle = '#16a34a';
             ctx.beginPath();
-            ctx.moveTo(w * 0.25, h - 20);
-            ctx.lineTo(w * 0.28, h * 0.25);
-            ctx.lineTo(w * 0.72, h * 0.25);
-            ctx.lineTo(w * 0.75, h - 20);
+            ctx.moveTo(w * 0.22, h - 15);
+            ctx.lineTo(w * 0.32, h * 0.22);
+            ctx.lineTo(w * 0.68, h * 0.22);
+            ctx.lineTo(w * 0.78, h - 15);
             ctx.closePath();
             ctx.fill();
 
-            // 2. Green Circle (Top Center)
-            const greenY = h * 0.22;
+            // Fairway Grid Lines for Detail
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+            ctx.lineWidth = 1;
+            for (let yStep = h * 0.25; yStep < h - 20; yStep += 35) {
+                ctx.beginPath();
+                ctx.moveTo(w * 0.25, yStep);
+                ctx.lineTo(w * 0.75, yStep);
+                ctx.stroke();
+            }
+
+            // 2. Green Ellipse (Top Center)
+            const greenY = h * 0.20;
             ctx.fillStyle = '#22c55e';
             ctx.beginPath();
-            ctx.ellipse(w / 2, greenY, 45, 30, 0, 0, Math.PI * 2);
+            ctx.ellipse(w / 2, greenY, 50, 32, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = '#86efac';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 2.5;
             ctx.stroke();
 
-            // Pin / Cup
+            // Pin / Cup Indicator
             ctx.fillStyle = '#f87171';
             ctx.beginPath();
             ctx.arc(w / 2, greenY, 5, 0, Math.PI * 2);
             ctx.fill();
             
-            // Flag line
+            // Flag pole & Flag
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2.5;
             ctx.beginPath();
             ctx.moveTo(w / 2, greenY);
-            ctx.lineTo(w / 2, greenY - 18);
+            ctx.lineTo(w / 2, greenY - 22);
             ctx.stroke();
             ctx.fillStyle = '#ef4444';
             ctx.beginPath();
-            ctx.moveTo(w / 2, greenY - 18);
-            ctx.lineTo(w / 2 + 12, greenY - 13);
-            ctx.lineTo(w / 2, greenY - 8);
+            ctx.moveTo(w / 2, greenY - 22);
+            ctx.lineTo(w / 2 + 14, greenY - 16);
+            ctx.lineTo(w / 2, greenY - 10);
             ctx.fill();
 
-            // 3. Aim Line Indicator (from current ball)
+            // 3. Aiming Guide Arc Line
             if (!isShotInProgress) {
                 const aimRad = (aimAngleDeg * Math.PI) / 180;
-                ctx.strokeStyle = 'rgba(251, 191, 36, 0.7)';
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.85)';
                 ctx.lineWidth = 2;
-                ctx.setLineDash([5, 5]);
+                ctx.setLineDash([6, 4]);
                 ctx.beginPath();
                 ctx.moveTo(currentBallPos.x, currentBallPos.y);
-                const aimX = currentBallPos.x + Math.sin(aimRad) * 140;
-                const aimY = currentBallPos.y - Math.cos(aimRad) * 140;
+
+                const clubKey = document.getElementById('club-select').value;
+                const clubDist = clubDistances[clubKey] || 150;
+                const powerPct = (parseInt(document.getElementById('power-range').value) || 100) / 100;
+                const targetMeters = parseFloat(document.getElementById('target-dist-input').value) || (clubDist * powerPct);
+
+                const totalHoleDist = simCourseHoles[simState.currentHoleIdx].dist;
+                const distPx = (targetMeters / totalHoleDist) * (h * 0.68);
+
+                const aimX = currentBallPos.x + Math.sin(aimRad) * distPx;
+                const aimY = currentBallPos.y - Math.cos(aimRad) * distPx;
+
                 ctx.lineTo(aimX, aimY);
                 ctx.stroke();
                 ctx.setLineDash([]);
+
+                // Target Landing Spot Circle
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(aimX, aimY, 10, 0, Math.PI * 2);
+                ctx.stroke();
             }
 
-            // 4. Trajectory Path Line
+            // 4. 3D Arc Ball Flight Trajectory Line & Shadow
             if (shotTrajectory.length > 1) {
-                ctx.strokeStyle = '#38bdf8';
-                ctx.lineWidth = 3;
+                // Ground shadow path
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.moveTo(shotTrajectory[0].x, shotTrajectory[0].y);
                 for (let i = 1; i < shotTrajectory.length; i++) {
                     ctx.lineTo(shotTrajectory[i].x, shotTrajectory[i].y);
                 }
                 ctx.stroke();
+
+                // 3D Arc Height Trajectory Path
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(shotTrajectory[0].x, shotTrajectory[0].y - (shotTrajectory[0].z || 0));
+                for (let i = 1; i < shotTrajectory.length; i++) {
+                    ctx.lineTo(shotTrajectory[i].x, shotTrajectory[i].y - (shotTrajectory[i].z || 0));
+                }
+                ctx.stroke();
             }
 
-            // 5. Ball Point Dot
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 6;
+            // 5. Current Ball & Shadow Render
+            const currentZ = currentBallPos.z || 0;
+            // Shadow on ground
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
             ctx.beginPath();
-            ctx.arc(currentBallPos.x, currentBallPos.y, 6, 0, Math.PI * 2);
+            ctx.ellipse(currentBallPos.x, currentBallPos.y, Math.max(2, 6 - currentZ * 0.05), Math.max(1, 3 - currentZ * 0.03), 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ball Core
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = 'rgba(0,0,0,0.6)';
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.arc(currentBallPos.x, currentBallPos.y - currentZ, 6 + currentZ * 0.05, 0, Math.PI * 2);
             ctx.fill();
             ctx.shadowBlur = 0;
         }
@@ -624,17 +696,54 @@
             document.getElementById('btn-imp-slice').className = type === 'slice' ? "flex-1 py-1.5 rounded-xl border border-amber-500 bg-amber-900/40 text-amber-300 text-xs font-bold" : "flex-1 py-1.5 rounded-xl border border-slate-600 bg-slate-800 text-xs font-bold hover:bg-slate-700";
         }
 
+        function onClubSelectChange() {
+            const select = document.getElementById('club-select');
+            const clubKey = select.value;
+            const defaultDist = clubDistances[clubKey] || 150;
+            const input = document.getElementById('target-dist-input');
+            input.value = defaultDist;
+            document.getElementById('power-range').value = 100;
+            document.getElementById('power-val-label').innerText = "100%";
+            renderCourseCanvas();
+        }
+
+        function onTargetDistInput() {
+            const clubKey = document.getElementById('club-select').value;
+            const maxDist = clubDistances[clubKey] || 150;
+            const val = parseFloat(document.getElementById('target-dist-input').value) || maxDist;
+            const pct = Math.min(100, Math.max(10, Math.round((val / maxDist) * 100)));
+            document.getElementById('power-range').value = pct;
+            document.getElementById('power-val-label').innerText = pct + "%";
+            renderCourseCanvas();
+        }
+
+        function onPowerRangeInput() {
+            const pct = parseInt(document.getElementById('power-range').value);
+            document.getElementById('power-val-label').innerText = pct + "%";
+            const clubKey = document.getElementById('club-select').value;
+            const maxDist = clubDistances[clubKey] || 150;
+            document.getElementById('target-dist-input').value = Math.round(maxDist * (pct / 100));
+            renderCourseCanvas();
+        }
+
         function updateClubRecommendation() {
             const select = document.getElementById('club-select');
             if (!select) return;
             const dist = simState.remainDist;
             if (dist <= 20) select.value = 'PT';
-            else if (dist <= 90) select.value = 'SW';
-            else if (dist <= 125) select.value = 'PW';
+            else if (dist <= 75) select.value = 'SW56';
+            else if (dist <= 100) select.value = 'AW50';
+            else if (dist <= 120) select.value = 'PW';
+            else if (dist <= 135) select.value = '9I';
+            else if (dist <= 145) select.value = '8I';
             else if (dist <= 155) select.value = '7I';
-            else if (dist <= 180) select.value = '5I';
-            else if (dist <= 215) select.value = '3W';
+            else if (dist <= 165) select.value = '6I';
+            else if (dist <= 175) select.value = '5I';
+            else if (dist <= 190) select.value = '4UT';
+            else if (dist <= 215) select.value = '5W';
             else select.value = '1W';
+
+            onClubSelectChange();
         }
 
         function updateHUDInfo() {
@@ -656,39 +765,46 @@
             document.getElementById('execute-shot-btn').disabled = true;
 
             const club = document.getElementById('club-select').value;
-            const powerPct = parseInt(document.getElementById('power-range').value) / 100;
-            const clubDist = clubDistances[club] || 100;
+            const inputDist = parseFloat(document.getElementById('target-dist-input').value);
+            const clubMaxDist = clubDistances[club] || 150;
+            const baseDist = !isNaN(inputDist) ? inputDist : clubMaxDist;
 
-            // Actual distance shot
-            const actualDist = clubDist * powerPct * (0.95 + Math.random() * 0.1);
-            
-            // Calculate Movement Vectors
+            // Real shot meter with wind factor
+            const actualDist = baseDist * (0.97 + Math.random() * 0.06);
+
+            // Vector math
             const aimRad = (aimAngleDeg * Math.PI) / 180;
             let sideMiss = 0;
-            if (selectedImpact === 'hook') sideMiss = -25;
-            else if (selectedImpact === 'slice') sideMiss = 25;
+            if (selectedImpact === 'hook') sideMiss = -20;
+            else if (selectedImpact === 'slice') sideMiss = 20;
 
-            // Canvas scale factor (meters to pixels)
             const totalHoleDist = simCourseHoles[simState.currentHoleIdx].dist;
-            const pyDistance = (actualDist / totalHoleDist) * (canvas.height * 0.7);
+            const pyDistance = (actualDist / totalHoleDist) * (canvas.height * 0.68);
 
             targetBallPos = {
                 x: currentBallPos.x + Math.sin(aimRad) * pyDistance + sideMiss,
-                y: Math.max(canvas.height * 0.18, currentBallPos.y - Math.cos(aimRad) * pyDistance)
+                y: Math.max(canvas.height * 0.16, currentBallPos.y - Math.cos(aimRad) * pyDistance)
             };
 
-            // Animate shot trajectory frame by frame
+            // Height Arc Apex based on club
+            if (club === '1W' || club === '5W') currentMaxApexHeight = 35;
+            else if (club === '4UT' || club === '5I' || club === '6I') currentMaxApexHeight = 45;
+            else if (club === 'PT') currentMaxApexHeight = 0;
+            else currentMaxApexHeight = 60; // Wedges high launch arc
+
             animProgress = 0;
             const startX = currentBallPos.x;
             const startY = currentBallPos.y;
+            shotTrajectory = [{ x: startX, y: startY, z: 0 }];
 
             function animateShot() {
-                animProgress += 0.04;
+                animProgress += 0.035;
                 if (animProgress >= 1) {
                     animProgress = 1;
                     currentBallPos.x = targetBallPos.x;
                     currentBallPos.y = targetBallPos.y;
-                    shotTrajectory.push({ ...currentBallPos });
+                    currentBallPos.z = 0;
+                    shotTrajectory.push({ x: currentBallPos.x, y: currentBallPos.y, z: 0 });
                     renderCourseCanvas();
                     finishShotExecution(actualDist);
                     return;
@@ -696,7 +812,10 @@
 
                 currentBallPos.x = startX + (targetBallPos.x - startX) * animProgress;
                 currentBallPos.y = startY + (targetBallPos.y - startY) * animProgress;
-                shotTrajectory.push({ ...currentBallPos });
+                // Parabolic Arc Formula: Z = 4 * H * t * (1 - t)
+                currentBallPos.z = 4 * currentMaxApexHeight * animProgress * (1 - animProgress);
+
+                shotTrajectory.push({ x: currentBallPos.x, y: currentBallPos.y, z: currentBallPos.z });
                 renderCourseCanvas();
 
                 requestAnimationFrame(animateShot);
@@ -714,10 +833,10 @@
             updateHUDInfo();
 
             // Cup-in logic (Within 3 meters or Putt completed)
-            if (simState.remainDist <= 3.5 || document.getElementById('club-select').value === 'PT') {
+            if (simState.remainDist <= 3.0 || document.getElementById('club-select').value === 'PT') {
                 simState.scores[simState.currentHoleIdx] = simState.shotCount;
                 renderGameScoreboard();
-                confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
+                confetti({ particleCount: 70, spread: 80, origin: { y: 0.6 } });
 
                 if (simState.currentHoleIdx < 8) {
                     setTimeout(() => {
@@ -732,427 +851,4 @@
                 updateClubRecommendation();
             }
         }
-
-        function renderGameScoreboard() {
-            const row = document.getElementById('game-score-row');
-            if (!row) return;
-
-            let total = 0;
-            let cellsHTML = '<td class="text-slate-400">타수</td>';
-            for (let i = 0; i < 9; i++) {
-                const sc = simState.scores[i];
-                if (sc !== null) {
-                    total += sc;
-                    cellsHTML += `<td class="text-emerald-400">${sc}</td>`;
-                } else {
-                    cellsHTML += `<td>-</td>`;
-                }
-            }
-            cellsHTML += `<td class="text-amber-400">${total > 0 ? total : '-'}</td>`;
-            row.innerHTML = cellsHTML;
-
-            document.getElementById('game-total-score-badge').innerText = `Total: ${total}`;
-        }
-
-        function saveGameSimResult() {
-            if (!simState.scores.every(s => s !== null)) return;
-            const newGameRecord = {
-                id: "game_" + Date.now(),
-                date: new Date().toISOString().split('T')[0],
-                mode: "2D 코스 감독 시뮬레이터",
-                totalScore: simState.scores.reduce((a,b)=>a+b, 0),
-                holes: simCourseHoles.map((h, idx) => ({
-                    par: h.par,
-                    dist: h.dist,
-                    score: simState.scores[idx]
-                }))
-            };
-
-            gameRoundsData.push(newGameRecord);
-            localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(gameRoundsData));
-            alert("2D 감독 시뮬레이션 경기 결과가 '게임 기록'에 저장되었습니다! 🏆");
-            switchMainTab('game-stats');
-        }
-
-        // ==========================================
-        // PRACTICE FIELD INPUT & SAVE LOGIC
-        // ==========================================
-        function resetInputForm() {
-            editingPracticeId = null;
-            document.getElementById('input-title').innerText = "연습장 9홀 기록 입력";
-            inputForm = {
-                id: "",
-                date: new Date().toISOString().split('T')[0],
-                cc: "",
-                sys: "GDR (골프존)",
-                memo: "",
-                holes: Array.from({length: 9}, () => ({ par: 4, dist: "", score: 4, putt: 2, pen: 0, fw: "안착", gir: "O" }))
-            };
-            activeHoleIdx = 0;
-            renderInputForm();
-        }
-
-        function renderInputForm() {
-            document.getElementById('input-date').value = inputForm.date;
-            document.getElementById('input-sys').value = inputForm.sys;
-            document.getElementById('input-cc').value = inputForm.cc;
-            document.getElementById('input-memo').value = inputForm.memo;
-
-            // Render Hole Chips
-            const container = document.getElementById('hole-chips-container');
-            container.innerHTML = inputForm.holes.map((h, i) => `
-                <button onclick="setActiveHole(${i})" class="flex-1 py-2 px-3 rounded-xl font-bold text-xs whitespace-nowrap transition border ${
-                    i === activeHoleIdx ? 'bg-emerald-600 text-white border-emerald-400 shadow-md' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
-                }">
-                    ${i + 1}번 홀 (${h.score}타)
-                </button>
-            `).join('');
-
-            renderActiveHoleCard();
-            updateInputSummary();
-        }
-
-        function setActiveHole(idx) {
-            activeHoleIdx = idx;
-            renderInputForm();
-        }
-
-        function renderActiveHoleCard() {
-            const h = inputForm.holes[activeHoleIdx];
-            document.getElementById('current-hole-header').innerText = `${activeHoleIdx + 1}번 홀 상세 (Par ${h.par})`;
-
-            [3, 4, 5].forEach(p => {
-                const btn = document.getElementById(`btn-par-${p}`);
-                if (btn) {
-                    btn.className = h.par === p ? "py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold border border-emerald-400" : "py-2 bg-slate-800 rounded-xl text-xs font-bold border border-slate-600 hover:bg-slate-700";
-                }
-            });
-
-            document.getElementById('input-hole-dist').value = h.dist || "";
-            document.getElementById('label-score').innerText = h.score;
-            document.getElementById('label-putt').innerText = h.putt;
-            document.getElementById('label-pen').innerText = h.pen;
-
-            const fwSec = document.getElementById('fw-sec');
-            if (h.par === 3) fwSec.classList.add('hidden');
-            else fwSec.classList.remove('hidden');
-
-            const fwMap = { '안착': 'btn-fw-good', '좌': 'btn-fw-left', '우': 'btn-fw-right' };
-            ['안착', '좌', '우'].forEach(type => {
-                const b = document.getElementById(fwMap[type]);
-                if (b) {
-                    b.className = h.fw === type ? "py-2 bg-emerald-600 text-white border border-emerald-400 rounded-xl" : "py-2 bg-slate-800 border border-slate-600 rounded-xl";
-                }
-            });
-
-            document.getElementById('btn-gir-on').className = h.gir === 'O' ? "py-2 bg-emerald-600 text-white border border-emerald-400 rounded-xl" : "py-2 bg-slate-800 border border-slate-600 rounded-xl";
-            document.getElementById('btn-gir-off').className = h.gir === 'X' ? "py-2 bg-rose-900/60 text-rose-200 border border-rose-500 rounded-xl" : "py-2 bg-slate-800 border border-slate-600 rounded-xl";
-
-            document.getElementById('btn-prev-hole').disabled = activeHoleIdx === 0;
-            document.getElementById('btn-next-hole').disabled = activeHoleIdx === 8;
-        }
-
-        function setHolePar(parVal) {
-            inputForm.holes[activeHoleIdx].par = parVal;
-            if (parVal === 3) inputForm.holes[activeHoleIdx].fw = "";
-            renderInputForm();
-        }
-
-        function updateHoleData(key, val) {
-            inputForm.holes[activeHoleIdx][key] = val;
-            updateInputSummary();
-        }
-
-        function stepHoleVal(key, delta) {
-            const h = inputForm.holes[activeHoleIdx];
-            let cur = parseInt(h[key]) || 0;
-            cur = Math.max(0, cur + delta);
-            h[key] = cur;
-            renderActiveHoleCard();
-            updateInputSummary();
-        }
-
-        function setHoleFW(type) {
-            inputForm.holes[activeHoleIdx].fw = type;
-            renderActiveHoleCard();
-        }
-
-        function setHoleGIR(girVal) {
-            inputForm.holes[activeHoleIdx].gir = girVal;
-            renderActiveHoleCard();
-        }
-
-        function navHole(delta) {
-            activeHoleIdx = Math.max(0, Math.min(8, activeHoleIdx + delta));
-            renderInputForm();
-        }
-
-        function updateInputSummary() {
-            let totalDist = 0, totalScore = 0, totalPar = 0;
-            inputForm.holes.forEach(h => {
-                totalDist += parseInt(h.dist) || 0;
-                totalScore += parseInt(h.score) || 0;
-                totalPar += parseInt(h.par) || 4;
-            });
-            const diff = totalScore - totalPar;
-            const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
-            document.getElementById('input-summary-text').innerText = `연습 합계: ${totalDist}m · 9홀 ${totalScore}타 (${diffStr})`;
-        }
-
-        function saveCurrentRound() {
-            inputForm.date = document.getElementById('input-date').value;
-            inputForm.sys = document.getElementById('input-sys').value;
-            inputForm.cc = document.getElementById('input-cc').value.trim();
-            inputForm.memo = document.getElementById('input-memo').value.trim();
-
-            if (!inputForm.id) {
-                inputForm.id = "prac_" + Date.now();
-                practiceRoundsData.push(JSON.parse(JSON.stringify(inputForm)));
-            } else {
-                const idx = practiceRoundsData.findIndex(r => r.id === inputForm.id);
-                if (idx >= 0) practiceRoundsData[idx] = JSON.parse(JSON.stringify(inputForm));
-            }
-
-            savePracticeRounds();
-            alert("연습장 9홀 기록이 저장되었습니다! 🎯");
-            resetInputForm();
-            switchMainTab('prac-stats');
-        }
-
-        // ==========================================
-        // STATS & RECORDS ANALYTICS FOR PRACTICE
-        // ==========================================
-        function renderPracticeStats() {
-            if (practiceRoundsData.length === 0) {
-                document.getElementById('prac-stat-avg-score').innerText = "-";
-                document.getElementById('prac-stat-best-score').innerText = "-";
-                document.getElementById('prac-stat-total-rounds').innerText = "0";
-                document.getElementById('prac-stat-rec10-box').innerHTML = `<div class="text-xs text-slate-400 text-center py-4">저장된 연습장 9홀 기록이 없습니다.</div>`;
-                return;
-            }
-
-            const scores = practiceRoundsData.map(r => r.holes.reduce((a,b)=>a+(parseInt(b.score)||0),0));
-            const avgScore = (scores.reduce((a,b)=>a+b,0) / scores.length).toFixed(1);
-            const bestScore = Math.min(...scores);
-
-            document.getElementById('prac-stat-avg-score').innerText = avgScore;
-            document.getElementById('prac-stat-best-score').innerText = bestScore;
-            document.getElementById('prac-stat-total-rounds').innerText = practiceRoundsData.length;
-
-            renderRecent10PracticeBox(scores);
-            renderDetailedPracticeMetrics();
-            renderPracticeScoreTrendChart(scores);
-            renderPracticeRoundsList();
-        }
-
-        function renderRecent10PracticeBox(scores) {
-            const count = Math.min(10, practiceRoundsData.length);
-            const recentScores = scores.slice(-count);
-            const avg10 = (recentScores.reduce((a,b)=>a+b,0) / count).toFixed(1);
-            const hcp = Math.max(0, ((avg10 - 36) * 0.96)).toFixed(1);
-
-            document.getElementById('prac-stat-rec10-box').innerHTML = `
-                <h3 class="font-bold text-sm text-slate-200">최근 ${count}회 연습장 평균 & 핸디캡</h3>
-                <div class="grid grid-cols-2 gap-2 text-xs pt-1">
-                    <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
-                        <span class="text-slate-400 block">최근 ${count}경기 연습 평균</span>
-                        <span class="text-lg font-bold text-emerald-400 font-serif-custom">${avg10} 타</span>
-                    </div>
-                    <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
-                        <span class="text-slate-400 block">연습장 추정 핸디캡</span>
-                        <span class="text-lg font-bold text-amber-400 font-serif-custom">+${hcp}</span>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderDetailedPracticeMetrics() {
-            let totalHoles = 0, totalPutts = 0, totalFWCount = 0, fwHits = 0, totalGIRCount = 0, girHits = 0;
-
-            practiceRoundsData.forEach(r => {
-                r.holes.forEach(h => {
-                    totalHoles++;
-                    totalPutts += parseInt(h.putt) || 0;
-                    if (h.par !== 3 && h.fw) {
-                        totalFWCount++;
-                        if (h.fw === '안착') fwHits++;
-                    }
-                    if (h.gir) {
-                        totalGIRCount++;
-                        if (h.gir === 'O') girHits++;
-                    }
-                });
-            });
-
-            const avgPutt = (totalPutts / totalHoles).toFixed(2);
-            const fwPct = totalFWCount ? Math.round((fwHits / totalFWCount) * 100) : 0;
-            const girPct = totalGIRCount ? Math.round((girHits / totalGIRCount) * 100) : 0;
-
-            document.getElementById('prac-stat-metrics-box').innerHTML = `
-                <h3 class="font-bold text-sm text-slate-200">연습장 상세 분석 지표</h3>
-                <div class="space-y-2 text-xs">
-                    <div class="flex justify-between items-center border-b border-slate-700/60 pb-1.5">
-                        <span class="text-slate-300">티샷 페어웨이 안착률 (FW Hit)</span>
-                        <span class="font-bold text-emerald-400">${fwPct}% (${fwHits}/${totalFWCount})</span>
-                    </div>
-                    <div class="flex justify-between items-center border-b border-slate-700/60 pb-1.5">
-                        <span class="text-slate-300">그린 적중률 (GIR)</span>
-                        <span class="font-bold text-teal-400">${girPct}% (${girHits}/${totalGIRCount})</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-slate-300">홀당 평균 퍼트 수</span>
-                        <span class="font-bold text-amber-400">${avgPutt} 퍼트</span>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderPracticeScoreTrendChart(scores) {
-            const chartData = scores.slice(-10);
-            if (chartData.length < 2) {
-                document.getElementById('prac-stat-trend-chart').innerHTML = `<div class="text-xs text-slate-500 py-3 text-center">추이를 표시하려면 기록이 2개 이상 필요합니다.</div>`;
-                return;
-            }
-
-            const min = Math.min(...chartData) - 1;
-            const max = Math.max(...chartData) + 1;
-            const pts = chartData.map((v, i) => {
-                const x = 15 + i * (270 / (chartData.length - 1));
-                const y = 65 - ((v - min) / (max - min)) * 50;
-                return `${x},${y}`;
-            }).join(' ');
-
-            document.getElementById('prac-stat-trend-chart').innerHTML = `
-                <svg viewBox="0 0 300 85" class="w-full h-auto">
-                    <polyline points="${pts}" fill="none" stroke="#10b981" stroke-width="2.5" />
-                    ${chartData.map((v, i) => {
-                        const x = 15 + i * (270 / (chartData.length - 1));
-                        const y = 65 - ((v - min) / (max - min)) * 50;
-                        return `
-                            <circle cx="${x}" cy="${y}" r="4" fill="#fbbf24" />
-                            <text x="${x}" y="${y - 8}" font-size="9" font-weight="bold" fill="#cbd5e1" text-anchor="middle">${v}</text>
-                        `;
-                    }).join('')}
-                </svg>
-            `;
-        }
-
-        function renderPracticeRoundsList() {
-            const container = document.getElementById('prac-stat-rounds-list');
-            container.innerHTML = practiceRoundsData.slice().reverse().map(r => {
-                const total = r.holes.reduce((a,b)=>a+(parseInt(b.score)||0),0);
-                return `
-                    <div onclick="editPracticeRound('${r.id}')" class="p-3 bg-slate-800/70 hover:bg-slate-800 rounded-xl border border-slate-700/80 flex justify-between items-center cursor-pointer transition">
-                        <div>
-                            <div class="text-xs font-bold text-slate-200">${r.date} · ${r.cc || '코스 미입력'}</div>
-                            <div class="text-[11px] text-slate-400 mt-0.5">${r.sys} · ${r.memo || '노트 없음'}</div>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-base font-bold text-emerald-400 font-serif-custom">${total}타</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderGameStats() {
-            if (gameRoundsData.length === 0) {
-                document.getElementById('game-stat-avg-score').innerText = "-";
-                document.getElementById('game-stat-best-score').innerText = "-";
-                document.getElementById('game-stat-total-count').innerText = "0회";
-                document.getElementById('game-stat-list').innerHTML = `<div class="text-xs text-slate-400 text-center py-4">플레이한 3D 감독 게임 기록이 없습니다.</div>`;
-                return;
-            }
-
-            const scores = gameRoundsData.map(g => g.totalScore);
-            const avg = (scores.reduce((a,b)=>a+b,0) / scores.length).toFixed(1);
-            const best = Math.min(...scores);
-
-            document.getElementById('game-stat-avg-score').innerText = avg;
-            document.getElementById('game-stat-best-score').innerText = best;
-            document.getElementById('game-stat-total-count').innerText = `${gameRoundsData.length}회`;
-
-            document.getElementById('game-stat-list').innerHTML = gameRoundsData.slice().reverse().map(g => `
-                <div class="p-3 bg-slate-800/70 rounded-xl border border-slate-700/80 flex justify-between items-center">
-                    <div>
-                        <div class="text-xs font-bold text-amber-300">${g.date} · 3D 감독 모드</div>
-                        <div class="text-[11px] text-slate-400 mt-0.5">9홀 플레이 완주</div>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-base font-bold text-amber-400 font-serif-custom">${g.totalScore}타</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function editPracticeRound(id) {
-            const r = practiceRoundsData.find(x => x.id === id);
-            if (!r) return;
-            editingPracticeId = id;
-            inputForm = JSON.parse(JSON.stringify(r));
-            document.getElementById('input-title').innerText = "연습장 라운드 기록 수정";
-            switchMainTab('practice');
-        }
-
-        // Storage Management
-        function savePracticeRounds() {
-            localStorage.setItem(PRAC_STORAGE_KEY, JSON.stringify(practiceRoundsData));
-        }
-
-        function loadAllStorageData() {
-            try {
-                const pData = localStorage.getItem(PRAC_STORAGE_KEY);
-                if (pData) practiceRoundsData = JSON.parse(pData);
-
-                const gData = localStorage.getItem(GAME_STORAGE_KEY);
-                if (gData) gameRoundsData = JSON.parse(gData);
-            } catch(e) {}
-        }
-
-        // Global Navigation 4-Tab Switcher
-        function switchMainTab(tab) {
-            document.getElementById('tab-view-practice').classList.add('hidden');
-            document.getElementById('tab-view-game').classList.add('hidden');
-            document.getElementById('tab-view-prac-stats').classList.add('hidden');
-            document.getElementById('tab-view-game-stats').classList.add('hidden');
-
-            const inactiveStyle = "py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center justify-center gap-1 font-bold";
-            const activeStyle = "py-1.5 rounded-lg bg-emerald-600 text-white shadow-md transition flex items-center justify-center gap-1 font-bold";
-
-            document.getElementById('nav-btn-practice').className = inactiveStyle;
-            document.getElementById('nav-btn-game').className = inactiveStyle;
-            document.getElementById('nav-btn-prac-stats').className = inactiveStyle;
-            document.getElementById('nav-btn-game-stats').className = inactiveStyle;
-
-            if (tab === 'practice') {
-                document.getElementById('tab-view-practice').classList.remove('hidden');
-                document.getElementById('nav-btn-practice').className = activeStyle;
-                renderInputForm();
-            } else if (tab === 'game') {
-                document.getElementById('tab-view-game').classList.remove('hidden');
-                document.getElementById('nav-btn-game').className = activeStyle;
-                setTimeout(() => {
-                    resizeCanvas();
-                    renderCourseCanvas();
-                }, 50);
-            } else if (tab === 'prac-stats') {
-                document.getElementById('tab-view-prac-stats').classList.remove('hidden');
-                document.getElementById('nav-btn-prac-stats').className = activeStyle;
-                renderPracticeStats();
-            } else if (tab === 'game-stats') {
-                document.getElementById('tab-view-game-stats').classList.remove('hidden');
-                document.getElementById('nav-btn-game-stats').className = activeStyle;
-                renderGameStats();
-            }
-        }
-
-        window.onload = () => {
-            lucide.createIcons();
-            loadAllStorageData();
-            init2DCourseSim();
-            renderInputForm();
-            renderGameScoreboard();
-        };
-    </script>
-</body>
-</html>
+<!-- ... existing code -->
